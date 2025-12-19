@@ -3,7 +3,6 @@ profile             = "tf-user"
 vpc_cidr            = "10.0.0.0/16"
 key                 = "ssh-key"
 subnet_count        = 2
-hp_proxy_count      = 1
 control_nodes_count = 3
 worker_nodes_count  = 2
 inbound_rules = [
@@ -93,4 +92,4 @@ outbound_rules = [{
 
 worker_instance_type = "t2.small"
 control_instance_type = "t2.medium"
-proxy_instance_type = "t2.small"
+

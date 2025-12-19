@@ -49,18 +49,10 @@ variable "key" {
   type = string
 }
 
-variable "hp_proxy_count" {
-  type = number
-}
-
 variable "worker_instance_type" {
   type = string
 }
 
 variable "control_instance_type" {
-  type = string
-}
-
-variable "proxy_instance_type" {
   type = string
 }
