@@ -4,7 +4,7 @@ Because we are not using a cloud load balancer, we use HAProxy on a separate vir
 The cluster has:
     3 master nodes (control plane)
     3 worker nodes
-    1 load balancer node (HAProxy)
+    1 NLB
 All machines run Linux (Ubuntu)
 The main idea is:
     All Kubernetes API traffic goes to the load balancer.
@@ -12,146 +12,6 @@ The main idea is:
     If one master fails, traffic automatically goes to the other master.
 Below are **all steps with commands**, written in **simple language**, **clear order**, and **no decoration**.
 You can follow this directly on servers.
-
----
-
-### HAProxy
-
-```bash
-#Prepare HAProxy LB
-#Login to load balancer node.
-sudo -i
-sudo apt-get update && sudo apt-get upgrade -ye #Update the system
-sudo apt install -y haproxy #Install haproxy
-sudo nano /etc/haproxy/haproxy.cfg #Edit haproxy configuration
-```
-Add this at the end of the file
-```jsx
-{/* This block is essentially the **public-facing listener** for Kubernetes API request */}
-frontend kubernetes-frontend
-        bind *:6443
-        mode tcp
-        option tcplog
-        default_backend kubernetes-backend
-
-
-backend kubernetes-backend
-        mode tcp
-        balance roundrobin
-        option tcp-check
-        default-server inter 10s downinter 5s rise 2 fall 2 slowstart 60s maxconn 250 maxqueue 256 weight 100
-        server master1 <private-ip of master node 01>:6443 check
-        server master2 <private-ip of master node 02>:6443 check
-        server master3 <private-ip of master node 03>:6443 check
-```
-##### What this means:
-
-- **`frontend kubernetes-api`**   
-    This names the frontend block `kubernetes-api`. It's just an identifier — you could call it anything, but naming it clearly helps for readability.
-    
-- **`bind *:6443`**
-    This tells HAProxy to listen for incoming connections on **port 6443** on **all interfaces** (`*` means all available IPs on the server).
-    - Port **6443** is the standard Kubernetes API port.
-    - This is the port `kubeadm` and `kubectl` will connect to.
-
-- **`default_backend kube-masters`**
-    Any connection received on this frontend will be forwarded to the **`kube-masters` backend** (defined in the next block).
-
-- **`backend kube-masters`**
-    This names the backend pool `kube-masters`. This matches the `default_backend` in the frontend section.
-    
-- **`mode tcp`**
-    HAProxy operates in **TCP mode** (not HTTP). The Kubernetes API server uses raw TCP (HTTPS), so this mode is required.
-    
-- **`balance roundrobin`**
-    Load balances incoming connections using **round-robin strategy**:    
-    - First request → master1
-    - Second request → master2
-    - Third → master3
-    - Then it repeats...
-    This spreads the load evenly across your control plane nodes.
-    
-- **`option tcp-check`**
-    Enables **health checks** using TCP connection attempts. If HAProxy cannot make a TCP connection to a node’s port 6443, it considers that node **unhealthy** and removes it from the rotation.
-    
-- **`default-server inter 5s fall 3 rise 2`**
-    These are health check tuning parameters:
-    - `inter 10s`: Check every 10s.
-    - `downinter 5s`: If down, recheck every 5s.
-    - `rise 2`: Need 2 successful checks to be considered healthy.
-    - `fall 2`: 2 failed checks mark the server as down.
-    - `slowstart 60s`: After recovery, slowly ramp up traffic over 60s.
-    - `maxconn 250`: Max 250 connections.
-    - `maxqueue 256`: Queue limit.
-    - `weight 100`: Default weight for load balancing.
-
-- **final output**
-```jsx
-global
-	log /dev/log	local0
-	log /dev/log	local1 notice
-	chroot /var/lib/haproxy
-	stats socket /run/haproxy/admin.sock mode 660 level admin
-	stats timeout 30s
-	user haproxy
-	group haproxy
-	daemon
-
-	# Default SSL material locations
-	ca-base /etc/ssl/certs
-	crt-base /etc/ssl/private
-
-	# See: https://ssl-config.mozilla.org/#server=haproxy&server-version=2.0.3&config=intermediate
-        ssl-default-bind-ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384
-        ssl-default-bind-ciphersuites TLS_AES_128_GCM_SHA256:TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256
-        ssl-default-bind-options ssl-min-ver TLSv1.2 no-tls-tickets
-
-defaults
-	log	global
-	mode	http
-	option	httplog
-	option	dontlognull
-        timeout connect 5000
-        timeout client  50000
-        timeout server  50000
-	errorfile 400 /etc/haproxy/errors/400.http
-	errorfile 403 /etc/haproxy/errors/403.http
-	errorfile 408 /etc/haproxy/errors/408.http
-	errorfile 500 /etc/haproxy/errors/500.http
-	errorfile 502 /etc/haproxy/errors/502.http
-	errorfile 503 /etc/haproxy/errors/503.http
-	errorfile 504 /etc/haproxy/errors/504.http
-
-frontend kubernetes-api
-         bind *:6443
-         mode tcp
-         option tcplog
-         default_backend kube-master-nodes
-
-backend kube-master-nodes
-        mode tcp
-        balance roundrobin
-        option tcp-check
-        default-server inter 10s downinter 5s rise 2 fall 2 slowstart 60s maxconn 250 maxqueue 256 weight 100
-        server master1 <private-ip of master node 01>:6443 check
-        server master2 <private-ip of master node 02>:6443 check
-```
-
-```bash
-sudo systemctl restart haproxy
-sudo systemctl enable haproxy
-```
-```bash
-#Check if the port 6443 is open and responding for haproxy connection or not
-ss -lntp | grep 6443
-nc -v localhost 6443
-```
-you will see a response like 
-```jsx
-Connection to localhost (127.0.0.1) 6443 port [tcp/*] succeeded!`
-```
-**Note** If you see failures for master1 and master2 connectivity, you can ignore them for time being as we have not yet installed anything on the servers.
-
 
 ---
 
@@ -425,26 +285,6 @@ Run '`kubectl get nodes`' on the control-plane to see this node join the cluster
 
 ![image](https://github.com/user-attachments/assets/4cac178f-6216-4a93-b78e-27419883210c)
 
-let see if our load balancer is working fine or not 
-
-```jsx
- sudo journalctl -u haproxy -f
-```
-you will see a output like this 
-
-```jsx
-May 24 21:02:36 ip-10-0-0-10 haproxy[19490]: 10.0.0.248:51630 [24/May/2025:21:02:36.367] kubernetes-api kube-master-nodes/master1 1/1/62 2744 -- 10/10/9/5/0 0/0
-May 24 21:02:36 ip-10-0-0-10 haproxy[19490]: 10.0.0.248:51632 [24/May/2025:21:02:36.367] kubernetes-api kube-master-nodes/master2 1/1/67 2707 -- 9/9/8/3/0 0/0
-May 24 21:02:36 ip-10-0-0-10 haproxy[19490]: 10.0.0.248:51622 [24/May/2025:21:02:36.367] kubernetes-api kube-master-nodes/master2 1/1/68 2707 -- 8/8/7/2/0 0/0
-May 24 21:02:36 ip-10-0-0-10 haproxy[19490]: 10.0.0.248:51640 [24/May/2025:21:02:36.382] kubernetes-api kube-master-nodes/master1 1/0/54 2707 -- 7/7/6/4/0 0/0
-May 24 21:02:36 ip-10-0-0-10 haproxy[19490]: 10.0.0.248:51652 [24/May/2025:21:02:36.382] kubernetes-api kube-master-nodes/master2 1/0/54 2744 -- 6/6/5/1/0 0/0
-May 24 21:02:37 ip-10-0-0-10 haproxy[19490]: 10.0.0.248:51588 [24/May/2025:21:02:36.354] kubernetes-api kube-master-nodes/master1 1/0/939 21869 -- 6/6/5/4/0 0/0
-May 24 21:02:37 ip-10-0-0-10 haproxy[19490]: 10.0.0.248:51484 [24/May/2025:21:02:34.968] kubernetes-api kube-master-nodes/master1 1/0/2394 8113 -- 6/6/5/3/0 0/0
-May 24 21:02:37 ip-10-0-0-10 haproxy[19490]: 10.0.0.248:36926 [24/May/2025:21:02:37.339] kubernetes-api kube-master-nodes/master2 1/0/24 7446 -- 5/5/4/1/0 0/0
-May 24 21:04:06 ip-10-0-0-10 haproxy[19490]: 10.0.0.248:51498 [24/May/2025:21:02:36.291] kubernetes-api kube-master-nodes/master2 1/0/90112 7989 -- 5/5/4/0/0 0/0
-May 24 21:04:53 ip-10-0-0-10 haproxy[19490]: 10.0.0.49:36898 [24/May/2025:21:04:53.770] kubernetes-api kube-master-nodes/master2 1/0/19 15526 -- 5/5/4/0/0 0/0
-
-```
 
 ---
  
@@ -494,6 +334,8 @@ nginx    1/1     Running   0          5m46s
 nginx1   1/1     Running   0          5m21s
 nginx2   1/1     Running   0          5m12s
 ```
+
+Go to the load balanced ---> health check ---> healty and unhealthy nodes
 
 ---
 
@@ -553,28 +395,6 @@ ETCDCTL_API=3 etcdctl \
 
 ---
 
-### ENABLE HAPROXY STATS (OPTIONAL)
-```bash
-#Edit the HAProxy configuration file:
-sudo nano /etc/haproxy/haproxy.cfg
-
-#Add the following configuration at the end of the file:
-listen stats
-    bind *:8404
-    mode http
-    stats enable
-    stats uri /
-    stats refresh 10s
-
-#Restart the HAProxy service to apply the changes:
-sudo systemctl restart haproxy
-
-#Access the HAProxy stats page in a browser:
-http://LOAD_BALANCER_IP:8404
-```
-
----
-
 ### TEST HIGH AVAILABILITY
 ```bash
 # Stop kubelet on one control plane node to simulate failure:
@@ -614,4 +434,15 @@ $ curl -k https://13.201.4.135:6443/version
 # - etcd maintains a consistent and highly available cluster state
 # - Worker nodes continue running workloads independently
 # - The cluster remains available even if one control plane node fails
+```
+```bash
+# If the number of control plane (master) nodes drops below the required quorum, etcd cannot form a majority and stops serving read/write requests.
+
+# As a result, the Kubernetes API server cannot access cluster state, and kubectl commands fail with an error like:
+
+root@ip-10-0-1-200:~# KUBECONFIG=/etc/kubernetes/admin.conf kubectl get nodes
+Error from server: etcdserver: request timed out
+
+# This is expected behavior and exists to protect data consistency.
+# It indicates quorum loss, not a configuration issue.
 ```
