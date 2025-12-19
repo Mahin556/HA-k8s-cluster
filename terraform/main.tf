@@ -10,7 +10,7 @@ resource "aws_subnet" "k8s_subnet" {
   vpc_id = aws_vpc.k8s_vpc.id
   #cidr_block = "${local.vpc_prefix_2_octets}.${count.index+1}.0/24"
   cidr_block = cidrsubnet(var.vpc_cidr, 8, count.index)
-  availability_zone = element(local.availability_zones,count.index)
+  availability_zone = element(locals.availability_zones,count.index)
 }
 
 resource "aws_internet_gateway" "k8s_igw" {
