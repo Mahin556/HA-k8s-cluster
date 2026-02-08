@@ -1,6 +1,4 @@
 ```bash
-WHY THE CLUSTER WORKS WITH 2 MASTERS BUT FAILS WITH ONLY 1 MASTER (QUORUM EXPLAINED)
-
 What is happening in this HA Kubernetes setup
 
 You created a Kubernetes cluster with:
@@ -30,7 +28,7 @@ For 3 etcd members:
 1.5 + 1 = 2.5 → rounded down to 2
 
 So:
-At least 2 etcd members must be UP.
+At least 2 etcd members must be UP(more then 50% to take decision).
 
 When all 3 masters are running:
 - Quorum is satisfied
