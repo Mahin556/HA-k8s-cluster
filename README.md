@@ -1,10 +1,26 @@
 ```bash
 # On server1
-vagrant up master-1
+vagrant up masterone
 
 # On server2
-vagrant up etcd-1 etcd-2 etcd-3
-vagrant up worker-1
+vagrant up etcdone etcdtwo etcdthree
+vagrant up workerone
+```
+```bash
+# On server1
+vagrant halt masterone
+
+# On server2
+vagrant halt etcdone etcdtwo etcdthree
+vagrant halt workerone
+```
+```bash
+# On server1
+vagrant destroy masterone
+
+# On server2
+vagrant destroy etcdone etcdtwo etcdthree
+vagrant destroy workerone
 ```
 
 ### Vagrant Environment
