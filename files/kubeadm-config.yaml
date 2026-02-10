@@ -1,0 +1,38 @@
+apiVersion: kubeadm.k8s.io/v1beta4
+kind: ClusterConfiguration
+
+clusterName: kubernetes
+kubernetesVersion: v1.35.0
+
+networking:
+  podSubnet: 192.168.0.0/16
+  serviceSubnet: 10.96.0.0/16
+
+# External ETCD configuration
+etcd:
+  external:
+    endpoints:
+      - https://etcdone:2379
+      - https://etcdtwo:2379
+      - https://etcdthree:2379
+    caFile: /etc/kubernetes/pki/etcd/ca.pem
+    certFile: /etc/kubernetes/pki/etcd/apiserver-etcd-client.pem
+    keyFile: /etc/kubernetes/pki/etcd/apiserver-etcd-client-key.pem
+---
+apiVersion: kubeadm.k8s.io/v1beta4
+kind: InitConfiguration
+
+localAPIEndpoint:
+  advertiseAddress: 192.168.29.51
+  bindPort: 6443
+---
+apiVersion: kubelet.config.k8s.io/v1beta1
+kind: KubeletConfiguration
+
+serializeImagePulls: false
+maxParallelImagePulls: 10
+
+evictionHard:
+  memory.available: "200Mi"
+  nodefs.available: "20%"
+  nodefs.inodesFree: "5%"

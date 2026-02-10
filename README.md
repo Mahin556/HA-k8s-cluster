@@ -35,7 +35,7 @@ vagrant destroy workerone
 
 This lab is a small, clean Kubernetes setup designed to clearly show how **etcd and the control plane work together**.
 
-There are **three etcd nodes** running on separate machines. Together they form an **etcd cluster** that stores all Kubernetes data such as cluster state, pod information, and configuration. The etcd nodes communicate with each other using the Raft protocol and require a majority (2 out of 3) to stay healthy. All etcd nodes use the **same TLS certificate and key**, signed by a single **etcd CA**, which is acceptable and common for lab environments.
+There are **three etcd nodes** running on separate machines. Together they form an **etcd cluster** that stores all Kubernetes data such as cluster state, pod information, and configuration. The etcd nodes communicate with each other using the Raft protocol and require a majority (2 out of 3) to stay healthy. All etcd nodes use the **Differente TLS certificate and key**, signed by a single **etcd CA**, which is acceptable and common for lab environments.
 
 There is **one master node** that runs the Kubernetes control plane components (kube-apiserver, scheduler, and controller manager). The master does **not store data locally**. Instead, it securely connects to the external etcd cluster over HTTPS. For this connection, the API server uses a **separate client certificate** (`apiserver-etcd-client.pem`) that is also signed by the same etcd CA. This separation is required for security and identity verification.
 
