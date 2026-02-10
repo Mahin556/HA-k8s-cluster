@@ -35,7 +35,7 @@ Vagrant.configure("2") do |config|
   # =============================
   # CONTROL PLANE (MASTERS)
   # =============================
-  Master_Node_Count = 1
+  Master_Node_Count = 3
 
   (1..Master_Node_Count).each do |i|
     name = NUM_WORDS[i]
@@ -98,6 +98,30 @@ Vagrant.configure("2") do |config|
 
       node.vm.provider "virtualbox" do |vb|
         vb.name = "k8s-worker#{name}"
+        vb.memory = 1024
+        vb.cpus = 1
+      end
+    end
+  end
+
+    # =============================
+  # LOAD BALANCER
+  # =============================
+  LoadBalancer_Count = 1
+
+  (1..LoadBalancer_Count).each do |i|
+    name = NUM_WORDS[i]
+
+    config.vm.define "lb#{name}" do |node|
+      node.vm.hostname = "lb#{name}.example.com"
+
+      node.vm.network "public_network",
+        ip: "192.168.29.8#{i}",
+        netmask: "255.255.255.0",
+        gateway: "192.168.29.1"
+
+      node.vm.provider "virtualbox" do |vb|
+        vb.name = "k8s-lb#{name}"
         vb.memory = 1024
         vb.cpus = 1
       end
