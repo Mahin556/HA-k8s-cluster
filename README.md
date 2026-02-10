@@ -22,6 +22,7 @@ vagrant destroy masterone
 vagrant destroy etcdone etcdtwo etcdthree
 vagrant destroy workerone
 ```
+---
 
 ### Vagrant Environment
 
@@ -33,17 +34,44 @@ vagrant destroy workerone
 |Master|masterone.example.com|192.168.29.51|Ubuntu 22.04|2G|2|
 |Worker|workerone.example.com|192.168.29.71|Ubuntu 22.04|1G|1|
 
-This lab is a small, clean Kubernetes setup designed to clearly show how **etcd and the control plane work together**.
+---
 
-There are **three etcd nodes** running on separate machines. Together they form an **etcd cluster** that stores all Kubernetes data such as cluster state, pod information, and configuration. The etcd nodes communicate with each other using the Raft protocol and require a majority (2 out of 3) to stay healthy. All etcd nodes use the **Differente TLS certificate and key**, signed by a single **etcd CA**, which is acceptable and common for lab environments.
+This lab is a small, clean Kubernetes setup designed to clearly demonstrate how **OpenSSL-based PKI enables secure communication between etcd and the Kubernetes control plane**.
 
-There is **one master node** that runs the Kubernetes control plane components (kube-apiserver, scheduler, and controller manager). The master does **not store data locally**. Instead, it securely connects to the external etcd cluster over HTTPS. For this connection, the API server uses a **separate client certificate** (`apiserver-etcd-client.pem`) that is also signed by the same etcd CA. This separation is required for security and identity verification.
+A **single Certificate Authority (CA)** is created using OpenSSL. This CA acts as the **root of trust** for the entire infrastructure. All certificates used by etcd and the Kubernetes API server are **signed by this CA**, allowing mutual TLS (mTLS) authentication.
 
-There is **one worker node** that runs application workloads. The worker node never talks to etcd directly. It communicates only with the master node (kube-apiserver), which then reads or writes data to etcd on its behalf.
+There are **three etcd nodes**, each running on a separate machine.
+Each etcd node has:
 
-Overall, the infrastructure clearly separates responsibilities:  
-**etcd handles data**, **the master controls the cluster**, and **the worker runs applications**, all secured using TLS with a shared CA and properly scoped certificates.
+* Its **own private key**
+* Its **own X.509 certificate** generated with OpenSSL
+* Certificates containing **unique SANs (IP + DNS name)**
 
+Although the certificates are different for every etcd node, they are all signed by the **same etcd CA**, which is a common and acceptable practice for lab and production environments. The etcd nodes authenticate each other using **mutual TLS**, and all peer-to-peer communication is encrypted. Internally, the etcd cluster uses the **Raft consensus protocol**, requiring a majority (2 out of 3) of members to remain available.
+
+There is **one master node** running the Kubernetes control plane components.
+The master node **does not store any cluster data locally**. Instead, the kube-apiserver connects to the external etcd cluster over HTTPS using **client certificate authentication**.
+
+For this purpose, a **dedicated client certificate** is generated using OpenSSL:
+
+* `apiserver-etcd-client.pem`
+* `apiserver-etcd-client-key.pem`
+
+This certificate is also signed by the same etcd CA but is scoped specifically for **client authentication**, not server or peer communication. This separation ensures that the API server can authenticate itself to etcd without being able to act as an etcd peer.
+
+There is **one worker node** that runs application workloads.
+The worker node **never communicates with etcd directly** and therefore does not require any etcd certificates. Instead, it communicates only with the kube-apiserver using Kubernetes-issued credentials. Any request that affects cluster state is forwarded by the API server to etcd using its client certificate.
+
+Overall, the infrastructure demonstrates a clear **PKI trust model using OpenSSL**:
+
+* The **CA establishes trust**
+* **etcd server and peer certificates** secure internal cluster communication
+* The **API server client certificate** provides controlled access to etcd
+* The **worker node remains isolated from etcd**
+
+This design cleanly separates responsibilities while enforcing strong cryptographic identity and encrypted communication across all components.
+
+---
 
 ### Reference:-
 - https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/ha-topology/
