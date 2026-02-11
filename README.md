@@ -215,3 +215,5 @@ Responsibility separation:
 * [https://youtu.be/YUrAXr5MJ0c](https://youtu.be/YUrAXr5MJ0c)
 * [https://youtu.be/dGUAanaYr8o](https://youtu.be/dGUAanaYr8o)
 * [https://youtu.be/Apwbp4-CZno](https://youtu.be/Apwbp4-CZno)
+* https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/high-availability/
+* https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/setup-ha-etcd-with-kubeadm/
