@@ -6,18 +6,18 @@
 
 - name: Copy etcd CA
   copy:
-    src: "{{ etcd_certs_dir }}/{{ etcd_ca_cert_name }}"
-    dest: "{{ etcd_pki_dir }}/{{ etcd_ca_cert_name }}"
+    src: "{{ etcd_certs_dir }}/{{ etcd_ca_crt_name }}"
+    dest: "{{ api_server_pki_dir }}/{{ etcd_ca_crt_name }}"
     mode: '0644'
 
 - name: Copy apiserver etcd client certificate
   copy:
-    src: "{{ api_server_certs_dir }}/{{ api_server_crt_name }}.pem"
-    dest: "{{ api_server_pki_dir }}/{{ api_server_crt_name }}.pem"
+    src: "{{ api_server_certs_dir }}/{{ api_server_crt_name }}"
+    dest: "{{ api_server_pki_dir }}/{{ api_server_crt_name }}"
     mode: '0644'
 
 - name: Copy apiserver etcd client key
   copy:
-    src: "{{ api_server_certs_dir }}/{{ api_server_key_name }}.key"
-    dest: "{{ api_server_pki_dir }}/{{ api_server_key_name }}.key"
+    src: "{{ api_server_certs_dir }}/{{ api_server_key_name }}"
+    dest: "{{ api_server_pki_dir }}/{{ api_server_key_name }}"
     mode: '0600'

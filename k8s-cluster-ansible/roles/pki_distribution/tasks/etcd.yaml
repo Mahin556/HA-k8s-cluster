@@ -10,8 +10,8 @@
 
 - name: Copy etcd CA certificate
   copy:
-    src: "{{ etcd_certs_dir }}/{{ etcd_ca_cert_name }}"
-    dest: "{{ etcd_pki_dir }}/{{ etcd_ca_cert_name }}"
+    src: "{{ etcd_certs_dir }}/{{ etcd_ca_crt_name }}"
+    dest: "{{ etcd_pki_dir }}/{{ etcd_ca_crt_name }}"
     mode: '0644'
 
 - name: Copy etcd server certificate
