@@ -24,6 +24,121 @@ vagrant destroy masterone mastertwo masterthree
 vagrant destroy etcdone etcdtwo etcdthree
 vagrant destroy workerone lbone lbtwo
 ```
+```bash
+$ ssh-keygen -t ed25519 -b 4096
+
+Generating public/private ed25519 key pair.
+Enter file in which to save the key (/root/.ssh/id_ed25519): /root/.ssh/ansible   
+Enter passphrase (empty for no passphrase): 
+Enter same passphrase again: 
+Your identification has been saved in /root/.ssh/ansible
+Your public key has been saved in /root/.ssh/ansible.pub
+```
+```bash
+$ eval $(ssh-agent)
+Agent pid 3038
+
+$ ssh-add /root/.ssh/ansible
+Enter passphrase for /root/.ssh/ansible: 
+Identity added: /root/.ssh/ansible (root@SVM)
+
+$ ssh-add -l
+256 SHA256:UDNgYrArbAGnssz9vyUXa1NZKLmG26eGYAefy67auCk root@SVM (ED25519)
+
+$ ssh -A node
+```
+```bash
+export ANSIBLE_CONFIG=~/HA-k8s-cluster/k8s-cluster-ansible/ansible.cfg
+
+ansible-galaxy collection install -r collections/requirements.yml -p ~/HA-k8s-cluster/k8s-cluster-ansible/collections/
+
+```
+```bash
+k8s-cluster-ansible/
+├── ansible.cfg
+├── .vault_dev
+├── .vault_stage
+├── .vault_prod
+├── inventory/
+│   ├── dev/
+│   ├── staging/
+│   └── production/
+
+echo "DevPassword123" > .vault_dev
+echo "StagePassword123" > .vault_stage
+echo "ProdPassword123" > .vault_prod
+chmod 600 .vault_*
+
+[defaults]
+inventory = inventory/production/hosts.ini
+vault_identity_list = dev@.vault_dev,stage@.vault_stage,prod@.vault_prod
+
+ansible-vault create inventory/dev/group_vars/all/vault.yml --encrypt-vault-id dev
+ansible-vault create inventory/staging/group_vars/all/vault.yml --encrypt-vault-id stage
+ansible-vault create inventory/production/group_vars/all/vault.yml --encrypt-vault-id prod
+
+#They do NOT store .vault_dev in project.
+export ANSIBLE_VAULT_IDENTITY_LIST="prod@/secure/path/prod_pass"
+#Or CI/CD injects it.
+
+ansible-playbook -i inventory/dev/hosts.ini playbooks/site.yml
+ansible-playbook -i inventory/staging/hosts.ini playbooks/site.yml
+ansible-playbook -i inventory/production/hosts.ini playbooks/site.yml
+```
+```bash
+✅ HOW VAULT IDENTITY AUTO-DECRYPT WORKS
+
+1) In ansible.cfg:
+
+   vault_identity_list = dev@.vault_dev,stage@.vault_stage,prod@.vault_prod
+
+   This means:
+   - dev   → use .vault_dev
+   - stage → use .vault_stage
+   - prod  → use .vault_prod
+
+
+2) When you run:
+
+   ansible-playbook -i inventory/production/hosts.ini playbooks/site.yml
+
+
+3) Ansible does this automatically:
+
+   ✔ Loads vault.yml from production inventory
+   ✔ Reads first line of encrypted file:
+     
+     $ANSIBLE_VAULT;1.2;AES256;prod
+
+   ✔ Sees vault ID = prod
+   ✔ Matches it with:
+     
+     prod@.vault_prod
+
+   ✔ Uses .vault_prod password
+   ✔ Decrypts file in memory
+   ✔ Uses variables normally
+
+
+4) You DO NOT need:
+
+   ❌ --ask-vault-pass
+   ❌ --vault-password-file
+   ❌ --encrypt-vault-id (during playbook run)
+
+
+5) It works automatically IF:
+
+   ✔ vault_identity_list is configured
+   ✔ vault file has correct vault ID
+   ✔ password file exists
+   ✔ permissions are correct (chmod 600)
+
+
+Result:
+Ansible automatically selects the correct password
+and decrypts the variables in memory at runtime.
+```
 
 ---
 

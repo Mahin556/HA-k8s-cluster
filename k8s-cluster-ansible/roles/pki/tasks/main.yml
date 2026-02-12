@@ -1,0 +1,15 @@
+---
+- name: Ensure all required paths are created
+  import_tasks: path.yaml
+
+- name: Configure Certificate Authority
+  import_tasks: ca.yaml
+
+- name: Generate etcd certs centrally
+  include_tasks: etcd.yaml
+  loop: "{{ groups['etcd'] }}"
+  loop_control:
+    loop_var: etcd_node
+
+- name: Generate apiserver etcd client cert
+  import_tasks: kubernetes.yaml

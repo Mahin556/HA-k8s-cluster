@@ -1,0 +1,37 @@
+- name: Generate etcd CA private key (encrypted)
+  community.crypto.openssl_privatekey:
+    path: "{{ etcd_certs_dir }}/{{ etcd_ca_key_name }}"
+    passphrase: "{{ etcd_ca_passphrase }}"
+    size: 4096
+    type: RSA
+    mode: '0600'
+
+- name: Generate CSR for etcd CA
+  community.crypto.openssl_csr_pipe:
+    privatekey_path: "{{ etcd_certs_dir }}/{{ etcd_ca_key_name }}"
+    privatekey_passphrase: "{{ etcd_ca_passphrase }}"
+    common_name: "etcd cluster"
+    country_name: "IN"
+    state_or_province_name: "Rajasthan"
+    locality_name: "India"
+    organization_name: "Kubernetes"
+    organizational_unit_name: "etcd-ca"
+    basic_constraints:
+      - "CA:TRUE"
+    basic_constraints_critical: true
+    key_usage:
+      - keyCertSign
+      - cRLSign
+    key_usage_critical: true
+  register: etcd_ca_csr
+
+- name: Generate self-signed etcd CA certificate
+  community.crypto.x509_certificate:
+    path: "{{ etcd_certs_dir }}/{{ etcd_ca_crt_name }}"
+    csr_content: "{{ etcd_ca_csr.csr }}"
+    privatekey_path: "{{ etcd_certs_dir }}/{{ etcd_ca_key_name }}"
+    privatekey_passphrase: "{{ etcd_ca_passphrase }}"
+    provider: selfsigned
+    selfsigned_not_after: "+3650d"
+    selfsigned_not_before: "-1d"
+    mode: '0644'

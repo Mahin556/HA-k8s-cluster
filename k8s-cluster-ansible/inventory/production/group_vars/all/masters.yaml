@@ -1,0 +1,4 @@
+api_server_certs_dir: /root/HA-k8s-cluster/k8s-cluster-ansible/files/pki/kubernetes/
+api_server_crt_name: apiserver_etcd_client.pem
+api_server_key_name: apiserver_etcd_client.key
+api_server_pki_dir: /etc/kubernetes/pki/etcd

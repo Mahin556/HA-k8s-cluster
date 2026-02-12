@@ -1,0 +1,8 @@
+---
+- name: Distribute etcd certificates
+  include_tasks: etcd.yaml
+  when: "'etcd' in group_names"
+
+- name: Distribute apiserver etcd client cert
+  include_tasks: masters.yaml
+  when: "'masters' in group_names"

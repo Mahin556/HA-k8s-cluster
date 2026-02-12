@@ -1,0 +1,40 @@
+- name: Create private key for apiserver etcd client
+  community.crypto.openssl_privatekey:
+    path: "{{ api_server_certs_dir }}/{{ api_server_key_name }}"
+    size: 4096
+    type: RSA
+    mode: '0600'
+
+- name: Create CSR for apiserver etcd client
+  community.crypto.openssl_csr_pipe:
+    privatekey_path: "{{ api_server_certs_dir }}/{{ api_server_key_name }}"
+    common_name: "kube-apiserver-etcd-client"
+    organization_name: "system:masters"
+    country_name: "IN"
+    state_or_province_name: "Rajasthan"
+    locality_name: "India"
+    organization_name: "Kubernetes"
+    organizational_unit_name: "api-server"
+    key_usage:
+      - digitalSignature
+      - keyEncipherment
+    extended_key_usage:
+      - clientAuth
+  register: apiserver_etcd_csr
+
+- name: Sign apiserver etcd client certificate
+  community.crypto.x509_certificate_pipe:
+    csr_content: "{{ apiserver_etcd_csr.csr }}"
+    provider: ownca
+    ownca_path: "{{ etcd_certs_dir }}/{{ etcd_ca_crt_name }}"
+    ownca_privatekey_path: "{{ etcd_certs_dir }}/{{ etcd_ca_key_name }}"
+    ownca_privatekey_passphrase: "{{ etcd_ca_passphrase }}"
+    ownca_not_after: "+365d"
+    ownca_not_before: "-1d"
+  register: apiserver_etcd_cert
+
+- name: Write apiserver etcd client certificate
+  copy:
+    dest: "{{ api_server_certs_dir }}/{{ api_server_crt_name }}"
+    content: "{{ apiserver_etcd_cert.certificate }}"
+    mode: '0644'

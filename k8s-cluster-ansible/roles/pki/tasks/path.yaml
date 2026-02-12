@@ -1,0 +1,11 @@
+- name: Ensure PKI directory {{ api_server_certs_dir }} exists
+  file:
+    path: "{{ api_server_certs_dir }}"
+    state: directory
+    mode: '0700'
+
+- name: Ensure PKI directory {{ etcd_certs_dir }}exists
+  file:
+    path: "{{ etcd_certs_dir }}"
+    state: directory
+    mode: '0700'

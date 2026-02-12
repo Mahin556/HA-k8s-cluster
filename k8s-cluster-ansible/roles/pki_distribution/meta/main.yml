@@ -1,0 +1,27 @@
+---
+galaxy_info:
+  role_name: pki_distribution
+  author: Mahin Raza
+  description: >
+    Distributes PKI certificates and keys to etcd and master nodes
+    for HA Kubernetes cluster setup.
+  company: Self
+  license: MIT
+  min_ansible_version: "2.15"
+
+  platforms:
+    - name: Ubuntu
+      versions:
+        - jammy
+        - focal
+
+  galaxy_tags:
+    - kubernetes
+    - pki
+    - etcd
+    - tls
+    - certificates
+    - distribution
+    - ha
+
+dependencies: []

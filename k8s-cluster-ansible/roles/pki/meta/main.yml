@@ -1,0 +1,27 @@
+---
+galaxy_info:
+  role_name: pki
+  author: Mahin Raza
+  description: >
+    Generates and manages PKI assets for HA Kubernetes cluster,
+    including etcd CA, etcd node certificates, and
+    kube-apiserver etcd client certificates.
+  company: Self
+  license: MIT
+  min_ansible_version: "2.15"
+
+  platforms:
+    - name: Ubuntu
+      versions:
+        - jammy
+        - focal
+
+  galaxy_tags:
+    - kubernetes
+    - pki
+    - etcd
+    - tls
+    - certificates
+    - ha
+
+dependencies: []

@@ -1,0 +1,10 @@
+127.0.0.1 localhost
+192.168.29.61 etcdone.example.com etcdone
+192.168.29.62 etcdtwo.example.com etcdtwo
+192.168.29.63 etcdthree.example.com etcdthree
+192.168.29.51 masterone.example.com masterone
+192.168.29.52 mastertwo.example.com mastertwo
+192.168.29.53 masterthree.example.com masterthree
+192.168.29.71 workerone.example.com workerone
+192.168.29.81 lbone.example.com lbone
+192.168.29.82 lbtwo.example.com lbtwo

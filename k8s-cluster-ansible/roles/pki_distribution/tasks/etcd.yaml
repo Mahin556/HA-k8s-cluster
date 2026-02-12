@@ -1,0 +1,27 @@
+- name: Set short hostname
+  set_fact:
+    short_name: "{{ inventory_hostname.split('.')[0] }}"
+
+- name: Ensure etcd pki directory exists
+  file:
+    path: "{{ etcd_pki_dir }}"
+    state: directory
+    mode: '0700'
+
+- name: Copy etcd CA certificate
+  copy:
+    src: "{{ etcd_certs_dir }}/{{ etcd_ca_cert_name }}"
+    dest: "{{ etcd_pki_dir }}/{{ etcd_ca_cert_name }}"
+    mode: '0644'
+
+- name: Copy etcd server certificate
+  copy:
+    src: "{{ etcd_certs_dir }}/{{ short_name }}.pem"
+    dest: "{{ etcd_pki_dir }}/{{ short_name }}.pem"
+    mode: '0644'
+
+- name: Copy etcd server private key
+  copy:
+    src: "{{ etcd_certs_dir }}/{{ short_name }}.key"
+    dest: "{{ etcd_pki_dir }}/{{ short_name }}.key"
+    mode: '0600'

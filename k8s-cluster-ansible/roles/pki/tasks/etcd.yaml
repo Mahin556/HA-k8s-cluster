@@ -1,0 +1,48 @@
+- name: Set short hostname
+  set_fact:
+    short_name: "{{ etcd_node.split('.')[0] }}"
+
+- name: Create private key for etcd node {{ short_name }}
+  community.crypto.openssl_privatekey:
+    path: "{{ etcd_certs_dir }}/{{ short_name }}.key"
+    size: 4096
+    type: RSA
+    mode: '0600'
+
+- name: Create CSR for etcd node {{ short_name }}
+  community.crypto.openssl_csr_pipe:
+    privatekey_path: "{{ etcd_certs_dir }}/{{ short_name }}.key"
+    common_name: "{{ etcd_node }}"
+    subject_alt_name:
+      - "DNS:{{ etcd_node }}"
+      - "DNS:{{ short_name }}"
+      - "IP:{{ hostvars[etcd_node].ansible_host }}"
+    country_name: "IN"
+    state_or_province_name: "Rajasthan"
+    locality_name: "India"
+    organization_name: "Kubernetes"
+    organizational_unit_name: "etcd-cluster"
+    key_usage:
+      - digitalSignature
+      - keyEncipherment
+    extended_key_usage:
+      - serverAuth
+      - clientAuth
+  register: etcd_csr
+
+- name: Sign etcd certificate for {{ short_name }}
+  community.crypto.x509_certificate_pipe:
+    csr_content: "{{ etcd_csr.csr }}"
+    provider: ownca
+    ownca_path: "{{ etcd_certs_dir }}/{{ etcd_ca_crt_name }}"
+    ownca_privatekey_path: "{{ etcd_certs_dir }}/{{ etcd_ca_key_name }}"
+    ownca_privatekey_passphrase: "{{ etcd_ca_passphrase }}"
+    ownca_not_after: "+365d"
+    ownca_not_before: "-1d"
+  register: etcd_certificate
+
+- name: Write etcd certificate for {{ short_name }}
+  copy:
+    dest: "{{ etcd_certs_dir }}/{{ short_name }}.pem"
+    content: "{{ etcd_certificate.certificate }}"
+    mode: '0644'

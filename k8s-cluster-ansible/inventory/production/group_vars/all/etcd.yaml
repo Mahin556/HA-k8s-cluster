@@ -1,0 +1,4 @@
+etcd_certs_dir: /root/HA-k8s-cluster/k8s-cluster-ansible/files/pki/etcd/
+etcd_ca_crt_name: etcd-ca.pem
+etcd_ca_key_name: etcd-ca.key
+etcd_pki_dir: /etc/etcd/pki

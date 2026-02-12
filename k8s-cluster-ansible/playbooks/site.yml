@@ -1,0 +1,69 @@
+---
+- name: Generate PKI
+  hosts: localhost
+  gather_facts: false
+  tags: 
+    - pki
+  roles:
+    - pki
+
+- name: Distribute etcd certificates
+  hosts: etcd
+  become: true
+  tags:
+    - pki_distribution
+  roles:
+    - pki_distribution
+
+- name: Distribute apiserver etcd client cert
+  hosts: masters
+  become: true
+  tags:
+    - pki_distribution
+  roles:
+    - pki_distribution
+
+- name: Common setup
+  hosts: all
+  become: true
+  tags: 
+    - common
+  roles:
+    - common
+
+
+- name: Setup Load Balancers
+  hosts: lb
+  become: true
+  tags: 
+    - lb
+  roles:
+    - loadbalancer
+
+
+- name: Setup etcd cluster
+  hosts: etcd
+  become: true
+  serial: 1
+  tags: 
+    - etcd
+  roles:
+    - etcd
+
+
+- name: Setup Control Plane
+  hosts: masters
+  become: true
+  tags: 
+    - master
+  roles:
+    - master
+
+
+- name: Setup Worker Nodes
+  hosts: workers
+  become: true
+  tags: 
+    - worker
+  roles:
+    - worker
