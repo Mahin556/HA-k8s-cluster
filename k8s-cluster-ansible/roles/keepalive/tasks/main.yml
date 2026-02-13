@@ -1,0 +1,17 @@
+---
+# tasks file for keepalive
+- include_tasks: pkgs.yaml
+  when: keepalive_configure | bool
+
+- include_tasks: path.yaml
+  when: keepalive_configure | bool
+
+- include_tasks: config.yaml
+  when: keepalive_configure | bool
+
+- include_tasks: verify.yaml
+  when: keepalive_verify | bool
+
+- include_tasks: failover.yaml
+  when: keepalive_failover | bool
+

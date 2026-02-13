@@ -1,0 +1,29 @@
+vrrp_script check_apiserver {
+    script "{{ keepalive.config_path }}/{{ keepalive.health_check.script_name }}"
+    interval {{ keepalive.health_check.interval }}
+    timeout {{ keepalive.health_check.timeout }}
+    fall {{ keepalive.health_check.fall }}
+    rise {{ keepalive.health_check.rise }}
+    weight {{ keepalive.health_check.weight }}
+}
+
+vrrp_instance VI_1 {
+    state {{ "MASTER" if inventory_hostname == groups['loadbalancer'][0] else "BACKUP" }}
+    interface {{ keepalive.interface }}
+    virtual_router_id {{ keepalive.virtual_router_id }}
+    priority {{ keepalived_priority }}
+    advert_int {{ keepalive.advert_int }}
+
+    authentication {
+        auth_type PASS
+        auth_pass {{ keepalive.auth_pass }}
+    }
+
+    virtual_ipaddress {
+        {{ keepalive.virtual_ip }}
+    }
+
+    track_script {
+        check_apiserver
+    }
+}

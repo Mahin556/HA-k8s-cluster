@@ -1,0 +1,23 @@
+---
+- name: Create health check script for keepalived
+  template:
+    src: check_apiserver.sh.j2
+    dest: "{{ keepalive.config_path }}/{{ keepalive.health_check.script_name }}"
+    mode: '0755'
+
+- name: Set node priority
+  set_fact:
+    keepalived_priority: "{{ 101 if inventory_hostname == groups['loadbalancer'][0] else 100 }}"
+
+- name: Deploy keepalived config
+  template:
+    src: keepalived.conf.j2
+    dest: /etc/keepalived/keepalived.conf
+  notify: restart keepalived
+
+- name: Ensure keepalived running
+  systemd:
+    name: keepalived
+    enabled: yes
+
+

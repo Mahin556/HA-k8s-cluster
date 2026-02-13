@@ -2,35 +2,41 @@
 - name: Generate PKI
   hosts: localhost
   gather_facts: false
-  tags: 
-    - pki
   roles:
+    - pki
+  tags: 
+    - pki_create
     - pki
 
 - name: Distribute etcd certificates
   hosts: etcd
   become: true
-  tags:
-    - pki_distribution_etcd
   roles:
     - pki_distribution
+  tags:
+    - pki_distribution
+    - pki_distribution_etcd
+    - pki
 
 - name: Distribute apiserver etcd client cert
   hosts: masters
   become: true
-  tags:
-    - pki_distribution_master
   roles:
     - pki_distribution
+  tags:
+    - pki_distribution
+    - pki_distribution_master
+    - pki
 
 
 - name: Setup etcd cluster
   hosts: etcd
   become: true
   serial: 1
-  tags: 
-    - etcd
   roles:
+    - etcd
+  tags: 
+    - etcd_config
     - etcd
 
 - name: Verify etcd cluster
@@ -41,7 +47,16 @@
     - etcd_verify
   tags:
     - etcd_verify
+    - etcd
 
+- name: Setup Load Balancers
+  hosts: loadbalancer
+  become: true
+  roles:
+    - keepalive
+  tags:
+    - lb
+    - keepalive
 
 
 - name: Common setup

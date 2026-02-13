@@ -1,0 +1,117 @@
+---
+# Determine master and backup (based on inventory order)
+
+- name: Define master and backup nodes
+  set_fact:
+    master_node: "{{ groups['loadbalancer'][0] }}"
+    backup_node: "{{ groups['loadbalancer'][1] }}"
+
+# ------------------------------------------------------------
+# Step 1: Stop keepalived on MASTER
+# ------------------------------------------------------------
+
+- name: Confirm VIP is currently on MASTER
+  command: ip addr show {{ keepalive.interface }}
+  register: master_vip
+  changed_when: false
+  when: inventory_hostname == master_node
+
+- name: Show MASTER interface before failover
+  debug:
+    msg: |
+      MASTER node: {{ inventory_hostname }}
+      -----------------------------
+      {{ master_vip.stdout }}
+  when: inventory_hostname == master_node
+
+- name: Stop keepalived on MASTER
+  systemd:
+    name: keepalived
+    state: stopped
+  when: inventory_hostname == master_node
+
+# ------------------------------------------------------------
+# Step 2: Wait for VIP to appear on BACKUP
+# ------------------------------------------------------------
+
+- name: Wait for VIP to move to BACKUP
+  command: ip addr show {{ keepalive.interface }}
+  register: backup_vip_wait
+  until: keepalive.virtual_ip in backup_vip_wait.stdout
+  retries: 10
+  delay: 2
+  changed_when: false
+  when: inventory_hostname == backup_node
+
+- name: Show BACKUP interface after failover
+  debug:
+    msg: |
+      BACKUP node: {{ inventory_hostname }}
+      -----------------------------
+      {{ backup_vip_wait.stdout }}
+  when: inventory_hostname == backup_node
+
+# ------------------------------------------------------------
+# Step 3: Validate failover success
+# ------------------------------------------------------------
+
+- name: Confirm VIP is now on BACKUP
+  command: ip addr show {{ keepalive.interface }}
+  register: backup_vip_final
+  changed_when: false
+  when: inventory_hostname == backup_node
+
+- name: Fail if VIP did not failover
+  fail:
+    msg: "VIP did not failover to BACKUP!"
+  when:
+    - inventory_hostname == backup_node
+    - keepalive.virtual_ip not in backup_vip_final.stdout
+
+# ------------------------------------------------------------
+# Step 4: Start keepalived back on MASTER
+# ------------------------------------------------------------
+
+- name: Start keepalived on MASTER
+  systemd:
+    name: keepalived
+    state: started
+  when: inventory_hostname == master_node
+
+# ------------------------------------------------------------
+# Step 5: Wait for VIP to return to MASTER
+# ------------------------------------------------------------
+
+- name: Wait for VIP to return to MASTER
+  command: ip addr show {{ keepalive.interface }}
+  register: master_vip_wait
+  until: keepalive.virtual_ip in master_vip_wait.stdout
+  retries: 10
+  delay: 2
+  changed_when: false
+  when: inventory_hostname == master_node
+
+- name: Show MASTER interface after recovery
+  debug:
+    msg: |
+      MASTER node: {{ inventory_hostname }}
+      -----------------------------
+      {{ master_vip_wait.stdout }}
+  when: inventory_hostname == master_node
+
+# ------------------------------------------------------------
+# Step 6: Final validation
+# ------------------------------------------------------------
+
+- name: Confirm VIP returned to MASTER
+  command: ip addr show {{ keepalive.interface }}
+  register: master_vip_final
+  changed_when: false
+  when: inventory_hostname == master_node
+
+- name: Fail if VIP did not return
+  fail:
+    msg: "VIP did not return to MASTER!"
+  when:
+    - inventory_hostname == master_node
+    - keepalive.virtual_ip not in master_vip_final.stdout

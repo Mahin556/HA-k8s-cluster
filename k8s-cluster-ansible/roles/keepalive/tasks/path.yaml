@@ -1,0 +1,9 @@
+---
+- name: Creating required directories in filesystem
+  file:
+    path: "{{ keepalive.config_path }}"
+    state: directory
+    mode: '0700'
+
+
+  

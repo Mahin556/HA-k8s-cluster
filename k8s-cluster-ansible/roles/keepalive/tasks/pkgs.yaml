@@ -1,0 +1,8 @@
+---
+- name: Install keepalived package
+  package:
+    name: 
+      - keepalived
+      - curl
+    state: present
+    update_cache: yes

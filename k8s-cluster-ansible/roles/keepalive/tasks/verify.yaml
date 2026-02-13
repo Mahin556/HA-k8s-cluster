@@ -1,0 +1,15 @@
+---
+- name: Check if VIP exists on interface
+  command: ip addr show {{ keepalive.interface }}
+  register: vip_check
+  changed_when: false
+
+- name: Interface
+  debug:
+    msg: "{{ vip_check.stdout }}"
+
+- name: Check which load balancer has the VIP
+  debug:
+    msg: "VIP {{ keepalive.virtual_ip }} is present on interface {{ keepalive.interface }} on {{ inventory_hostname }}. Please check the keepalived configuration and ensure the service is running."
+  when:
+    - keepalive.virtual_ip in vip_check.stdout

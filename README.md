@@ -143,6 +143,13 @@ and decrypts the variables in memory at runtime.
 ANSIBLE_STDOUT_CALLBACK=minimal ansible-playbook playbooks/site.yml --tags=etcd_verify -e="overwrite_logs=true"
 ansible-playbook playbooks/site.yml --tags=etcd_verify -e="overwrite_logs=true"
 ```
+```bash
+ansible-playbook playbooks/site.yml \
+--tags=keepalive \
+-e "keepalive_configure=false keepalive_verify=true"
+
+ansible-playbook playbooks/site.yml --tags=keepalive -e "keepalive_configure=false keepalive_verify=false keepalive_failover=true"
+```
 
 
 ---
