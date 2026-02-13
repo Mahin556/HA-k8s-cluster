@@ -1,0 +1,29 @@
+- name: Download foo.conf
+  ansible.builtin.get_url:
+    url: "https://github.com/etcd-io/etcd/releases/download/{{ etcd_version }}/etcd-{{ etcd_version }}-linux-amd64.tar.gz"
+    dest: /tmp/
+
+- name: Extract foo.tgz into /var/lib/foo
+  ansible.builtin.unarchive:
+    src: /tmp/etcd-{{ etcd_version }}-linux-amd64.tar.gz
+    dest: /tmp/
+    remote_src: yes
+
+- name: moving
+  ansible.builtin.shell: "mv /tmp/etcd-${ETCD_VER}-linux-amd64/etcd* /usr/local/bin/"
+  environment:
+    ETCD_VER: "{{ etcd_version }}"
+
+- name: Find old etcd files
+  ansible.builtin.find:
+    paths: /tmp
+    patterns: "etcd*"
+    file_type: any
+  register: etcd_files
+
+- name: Remove old etcd files
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: absent
+  loop: "{{ etcd_files.files }}"
+

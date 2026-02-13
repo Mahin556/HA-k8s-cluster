@@ -13,7 +13,6 @@
     country_name: "IN"
     state_or_province_name: "Rajasthan"
     locality_name: "India"
-    organization_name: "Kubernetes"
     organizational_unit_name: "api-server"
     key_usage:
       - digitalSignature

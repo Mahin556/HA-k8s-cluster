@@ -1,0 +1,9 @@
+---
+galaxy_info:
+  role_name: etcd_verify
+  author: Mahin Raza
+  description: Verify external etcd cluster health and status
+  min_ansible_version: "2.15"
+  license: MIT
+
+dependencies: []

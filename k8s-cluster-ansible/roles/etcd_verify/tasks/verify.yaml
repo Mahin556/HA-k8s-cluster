@@ -1,0 +1,56 @@
+---
+- name: Show etcd cluster status table
+  command: >
+    etcdctl
+    --endpoints={% for host in groups['etcd'] %}https://{{ hostvars[host].ansible_host }}:2379{% if not loop.last %},{% endif %}{% endfor %}
+    endpoint status --write-out=table
+  environment:
+    ETCDCTL_CACERT: "{{ etcd_pki_dir }}/{{ etcd_ca_crt_name }}"
+    ETCDCTL_CERT: "{{ etcd_pki_dir }}/{{ inventory_hostname.split('.')[0] }}.pem"
+    ETCDCTL_KEY: "{{ etcd_pki_dir }}/{{ inventory_hostname.split('.')[0] }}.key"
+  changed_when: false
+  register: etcd_status
+  
+
+- name: Show etcd cluster health table
+  command: >
+    etcdctl
+    --endpoints={% for host in groups['etcd'] %}https://{{ hostvars[host].ansible_host }}:2379{% if not loop.last %},{% endif %}{% endfor %}
+    endpoint health --write-out=table
+  environment:
+    ETCDCTL_CACERT: "{{ etcd_pki_dir }}/{{ etcd_ca_crt_name }}"
+    ETCDCTL_CERT: "{{ etcd_pki_dir }}/{{ inventory_hostname.split('.')[0] }}.pem"
+    ETCDCTL_KEY: "{{ etcd_pki_dir }}/{{ inventory_hostname.split('.')[0] }}.key"
+  changed_when: false
+  register: etcd_health
+
+- name: Overwrite etcd verification log if overwrite_logs is true
+  delegate_to: localhost
+  run_once: true
+  copy:
+    dest: "{{ etcd_verify_output_dir }}/etcd_verify.log"
+    content: ""
+    mode: '0644'
+  when: overwrite_logs
+
+- name: Append etcd verification to controller log
+  delegate_to: localhost
+  run_once: true
+  shell: |
+    TS=$(date +%Y-%m-%d_%H-%M-%S)
+    {
+      echo "===== ETCD VERIFY ${TS} ====="
+      echo
+      echo "{{ etcd_status.stdout }}"
+      echo
+      echo "{{ etcd_health.stdout }}"
+      echo
+    } >> ${LOG_FILE}
+  environment:
+    LOG_FILE: "{{ etcd_verify_output_dir }}/etcd_verify.log"
+  changed_when: false
+
+- name: Fail if etcd cluster unhealthy
+  fail:
+    msg: "Etcd cluster is unhealthy!"
+  when: "'unhealthy' in etcd_health.stdout"

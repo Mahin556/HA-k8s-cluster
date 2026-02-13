@@ -1,0 +1,3 @@
+---
+# tasks file for etcd_verify
+- import_tasks: verify.yaml

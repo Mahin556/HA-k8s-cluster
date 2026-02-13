@@ -1,0 +1,5 @@
+---
+# tasks file for etcd
+
+- import_tasks: pkgs.yaml
+- import_tasks: systemd.yaml

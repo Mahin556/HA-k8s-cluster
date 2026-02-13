@@ -139,6 +139,11 @@ Result:
 Ansible automatically selects the correct password
 and decrypts the variables in memory at runtime.
 ```
+```bash
+ANSIBLE_STDOUT_CALLBACK=minimal ansible-playbook playbooks/site.yml --tags=etcd_verify -e="overwrite_logs=true"
+ansible-playbook playbooks/site.yml --tags=etcd_verify -e="overwrite_logs=true"
+```
+
 
 ---
 

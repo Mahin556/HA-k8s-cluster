@@ -11,7 +11,7 @@
   hosts: etcd
   become: true
   tags:
-    - pki_distribution
+    - pki_distribution_etcd
   roles:
     - pki_distribution
 
@@ -19,26 +19,9 @@
   hosts: masters
   become: true
   tags:
-    - pki_distribution
+    - pki_distribution_master
   roles:
     - pki_distribution
-
-- name: Common setup
-  hosts: all
-  become: true
-  tags: 
-    - common
-  roles:
-    - common
-
-
-- name: Setup Load Balancers
-  hosts: lb
-  become: true
-  tags: 
-    - lb
-  roles:
-    - loadbalancer
 
 
 - name: Setup etcd cluster
@@ -49,6 +32,25 @@
     - etcd
   roles:
     - etcd
+
+- name: Verify etcd cluster
+  hosts: "{{ groups['etcd'][0] }}"
+  become: true
+  gather_facts: false
+  roles:
+    - etcd_verify
+  tags:
+    - etcd_verify
+
+
+
+- name: Common setup
+  hosts: all
+  become: true
+  tags: 
+    - common
+  roles:
+    - common
 
 
 - name: Setup Control Plane
