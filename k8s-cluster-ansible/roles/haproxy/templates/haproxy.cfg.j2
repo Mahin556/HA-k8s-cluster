@@ -1,0 +1,88 @@
+global
+    log /dev/log    local0 notice
+    user haproxy
+    group haproxy
+    maxconn 4000
+    # Other global settings like SSL/TLS defaults, chroot, etc. can go here
+
+defaults
+    mode http
+    log global
+    option httplog
+    option dontlognull
+    timeout connect 10s
+    timeout client 30s
+    timeout server 30s
+    # Other default options like health checks (option httpchk) can go here
+
+# =========================================================
+# KUBERNETES API LOAD BALANCER
+# =========================================================
+
+frontend kubernetes-api
+    bind *:{{ haproxy.api_port }}
+    mode tcp
+    option tcplog
+    default_backend kube-master-nodes
+
+backend kube-master-nodes
+    mode tcp
+    balance roundrobin
+    option tcp-check
+    default-server inter 10s downinter 5s rise 2 fall 2 slowstart 60s maxconn 250 maxqueue 256 weight 100
+
+{% for host in groups['masters'] %}
+    server {{ host.split('.')[0] }} {{ hostvars[host].ansible_host }}:{{ haproxy.backend_api_port }} check
+{% endfor %}
+
+
+# =========================================================
+# NODEPORT HTTP
+# =========================================================
+
+frontend http-app
+    bind *:80
+    mode tcp
+    option tcplog
+    default_backend workers-http
+
+backend workers-http
+    mode tcp
+    balance roundrobin
+    default-server inter 10s downinter 5s rise 2 fall 2 slowstart 60s maxconn 250 maxqueue 256 weight 100
+
+{% for host in groups['masters'] %}
+    server {{ host.split('.')[0] }} {{ hostvars[host].ansible_host }}:{{ haproxy.nodeport_http }} check
+{% endfor %}
+
+
+# =========================================================
+# NODEPORT HTTPS
+# =========================================================
+
+frontend https-app
+    bind *:443
+    mode tcp
+    option tcplog
+    default_backend workers-https
+
+backend workers-https
+    mode tcp
+    balance roundrobin
+    default-server inter 10s downinter 5s rise 2 fall 2 slowstart 60s maxconn 250 maxqueue 256 weight 100
+
+{% for host in groups['masters'] %}
+    server {{ host.split('.')[0] }} {{ hostvars[host].ansible_host }}:{{ haproxy.nodeport_https }} check
+{% endfor %}
+
+
+# =========================================================
+# STATS
+# =========================================================
+
+listen stats
+    bind *:{{ haproxy.stats_port }}
+    mode http
+    stats enable
+    stats uri /
+    stats refresh 10s

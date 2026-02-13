@@ -1,0 +1,15 @@
+- name: Check HAProxy port 6443
+  shell: ss -lntp | grep 6443
+  register: haproxy_port
+  changed_when: false
+
+- debug:
+    var: haproxy_port.stdout_lines
+
+- name: Check HAProxy stats port 8404
+  shell: ss -lntp | grep 8404
+  register: haproxy_stats_port
+  changed_when: false
+
+- debug:
+    var: haproxy_stats_port.stdout_lines

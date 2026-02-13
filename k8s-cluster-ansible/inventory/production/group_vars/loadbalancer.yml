@@ -1,6 +1,9 @@
 haproxy:
-  listen_port: 6443
-  backend_port: 6443
+  api_port: 6443
+  backend_api_port: 6443
+  stats_port: 8404
+  nodeport_http: 32059
+  nodeport_https: 32443
 
 keepalive:
   health_check:

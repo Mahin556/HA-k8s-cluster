@@ -1,0 +1,11 @@
+---
+# tasks file for haproxy
+- name: Install HAProxy
+  import_tasks: install.yaml
+
+- name: Configure HAProxy
+  import_tasks: configure.yaml
+
+- name: Verify HAProxy
+  import_tasks: verify.yaml
+

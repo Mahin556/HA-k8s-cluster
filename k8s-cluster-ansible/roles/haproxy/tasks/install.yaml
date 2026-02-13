@@ -1,0 +1,12 @@
+---
+- name: Update apt cache
+  apt:
+    update_cache: yes
+  become: true
+
+- name: Install HAProxy
+  apt:
+    name: haproxy
+    state: present
+  become: true
+

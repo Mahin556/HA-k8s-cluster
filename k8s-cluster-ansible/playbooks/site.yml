@@ -58,6 +58,15 @@
     - lb
     - keepalive
 
+- name: Setup Load Balancers
+  hosts: loadbalancer
+  become: true
+  roles:
+    - haproxy
+  tags:
+    - lb
+    - haproxy
+
 
 - name: Common setup
   hosts: all
