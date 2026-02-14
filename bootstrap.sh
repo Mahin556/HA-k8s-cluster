@@ -10,6 +10,10 @@ sudo sed -i 's/^PasswordAuthentication no/PasswordAuthentication yes/' /etc/ssh/
 sudo echo "PermitRootLogin yes" >> /etc/ssh/sshd_config
 sudo systemctl reload sshd
 
+# Set Root password
+echo "[TASK 2] Set root password"
+echo -e "root\nroot" | passwd root >/dev/null 2>&1
+
 echo "[TASK 2] Create ansible user"
 
 # Create user only if not exists
