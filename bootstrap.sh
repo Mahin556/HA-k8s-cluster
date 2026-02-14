@@ -34,7 +34,7 @@ sudo chown -R ansible:ansible /home/ansible/.ssh
 
 echo "[TASK 4] Configure passwordless sudo"
 
-sudo echo "ansible ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/ansible
+echo "ansible ALL=(ALL) NOPASSWD:ALL" | sudo tee /etc/sudoers.d/ansible
 sudo chmod 440 /etc/sudoers.d/ansible
 
 echo "[TASK 5] Configure host resolution"
