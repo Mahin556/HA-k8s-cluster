@@ -12,11 +12,11 @@ sudo systemctl reload sshd
 
 # Set Root password
 echo "[TASK 2] Set root password"
-echo -e "root\nroot" | passwd root >/dev/null 2>&1
+sudo echo -e "root\nroot" | passwd root >/dev/null 2>&1
 
 # Set ansible user password
 echo "[TASK 2] Set ansible user password"
-echo -e "ansible\nansible" | passwd ansible >/dev/null 2>&1
+sudo echo -e "ansible\nansible" | passwd ansible >/dev/null 2>&1
 
 echo "[TASK 2] Create ansible user"
 
