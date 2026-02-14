@@ -17,7 +17,7 @@ Vagrant.configure("2") do |config|
   config.ssh.insert_key = true
 
   config.vm.provision "file", source: "files/ansible.pub", destination: "/tmp/ansible.pub"
-  config.vm.provision "file", source: "/root/.ssh/ansible", destination: "/tmp/ansible"
+  config.vm.provision "file", source: "files/ansible", destination: "/tmp/ansible"
   config.vm.provision "file", source: "files/hosts", destination: "/tmp/hosts"
   config.vm.provision "shell", path: "bootstrap.sh"
 
