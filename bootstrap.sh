@@ -7,10 +7,10 @@ sudo systemctl reload sshd
 
 # Set Root password
 sudo echo -e "root\nroot" | passwd root >/dev/null 2>&1
-sudo echo 'ansible:ansible' | sudo chpasswd
 
 # Create a ansible user and configure it
 sudo useradd -m -s /bin/bash ansible
+sudo echo 'ansible:ansible' | sudo chpasswd
 
 # Setup SSH directory
 sudo mkdir -p /home/ansible/.ssh
