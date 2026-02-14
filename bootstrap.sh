@@ -2,7 +2,7 @@
 
 echo "[TASK 1] Install required packages"
 sudo apt update -y
-sudo apt install -y rsync
+sudo apt install -y rsync sshpass
 
 # Enable ssh password authentication
 echo "[TASK 1] Enable ssh password authentication"
@@ -28,10 +28,6 @@ echo "[TASK 3] Configure SSH key authentication"
 # Add public key
 sudo cat /tmp/ansible.pub >> /home/ansible/.ssh/authorized_keys
 sudo chmod 600 /home/ansible/.ssh/authorized_keys
-
-# Copy private key
-sudo cp /tmp/ansible /home/ansible/.ssh/id_rsa
-chmod 600 /home/ansible/.ssh/id_rsa
 
 # Fix ownership
 sudo chown -R ansible:ansible /home/ansible/.ssh
