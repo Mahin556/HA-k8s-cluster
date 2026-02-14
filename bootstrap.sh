@@ -1,24 +1,46 @@
 #!/bin/bash
 
+echo "[TASK 1] Install required packages"
+apt update -y
+apt install -y rsync
+
 # Enable ssh password authentication
 echo "[TASK 1] Enable ssh password authentication"
-sudo sed -i 's/^PasswordAuthentication no/PasswordAuthentication yes/' /etc/ssh/sshd_config
+sed -i 's/^PasswordAuthentication no/PasswordAuthentication yes/' /etc/ssh/sshd_config
 echo "PermitRootLogin yes" >> /etc/ssh/sshd_config
-sudo systemctl reload sshd
+systemctl reload sshd
 
-# Set Root password
-echo "[TASK 2] Set root password"
-sudo echo -e "root\nroot" | passwd root >/dev/null 2>&1
+echo "[TASK 2] Create ansible user"
 
-# Create a ansible user and configure it
-sudo useradd -m -s /bin/bash ansible
-sudo mkdir -p /home/ansible/.ssh
-sudo cat /tmp/ansible.pub >> /home/ansible/.ssh/authorized_keys
-sudo chown -R ansible:ansible /home/ansible/.ssh
-sudo chmod 700 /home/ansible/.ssh
-sudo chmod 600 /home/ansible/.ssh/authorized_keys
-sudo echo "ansible ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+# Create user only if not exists
+id -u ansible &>/dev/null || useradd -m -s /bin/bash ansible
 
-sudo mv /tmp/hosts /etc/hosts
-sudo chown root:root /etc/hosts
-sudo chmod 644 /etc/hosts
+# Setup SSH directory
+mkdir -p /home/ansible/.ssh
+chmod 700 /home/ansible/.ssh
+
+echo "[TASK 3] Configure SSH key authentication"
+
+# Add public key
+cat /tmp/ansible.pub >> /home/ansible/.ssh/authorized_keys
+chmod 600 /home/ansible/.ssh/authorized_keys
+
+# Copy private key
+cp /tmp/ansible /home/ansible/.ssh/id_rsa
+chmod 600 /home/ansible/.ssh/id_rsa
+
+# Fix ownership
+chown -R ansible:ansible /home/ansible/.ssh
+
+echo "[TASK 4] Configure passwordless sudo"
+
+echo "ansible ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/ansible
+chmod 440 /etc/sudoers.d/ansible
+
+echo "[TASK 5] Configure host resolution"
+
+mv /tmp/hosts /etc/hosts
+chown root:root /etc/hosts
+chmod 644 /etc/hosts
+
+echo "Bootstrap complete."
