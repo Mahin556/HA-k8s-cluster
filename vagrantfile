@@ -81,7 +81,7 @@ Vagrant.configure("2") do |config|
 
         for host in mastertwo masterthree
         do
-          sshpass -p "vagrant" ssh-copy-id \
+          sshpass -p "ansible" ssh-copy-id \
             -o StrictHostKeyChecking=no \
             ansible@${host}.example.com || true
         done

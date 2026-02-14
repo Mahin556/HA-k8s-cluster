@@ -14,6 +14,10 @@ sudo systemctl reload sshd
 echo "[TASK 2] Set root password"
 echo -e "root\nroot" | passwd root >/dev/null 2>&1
 
+# Set ansible user password
+echo "[TASK 2] Set ansible user password"
+echo -e "ansible\nansible" | passwd ansible >/dev/null 2>&1
+
 echo "[TASK 2] Create ansible user"
 
 # Create user only if not exists
