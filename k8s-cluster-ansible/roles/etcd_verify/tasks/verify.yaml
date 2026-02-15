@@ -6,7 +6,7 @@
     endpoint status --write-out=table
   environment:
     ETCDCTL_CACERT: "{{ etcd_pki_dir }}/{{ etcd_ca_crt_name }}"
-    ETCDCTL_CERT: "{{ etcd_pki_dir }}/{{ inventory_hostname.split('.')[0] }}.pem"
+    ETCDCTL_CERT: "{{ etcd_pki_dir }}/{{ inventory_hostname.split('.')[0] }}.crt"
     ETCDCTL_KEY: "{{ etcd_pki_dir }}/{{ inventory_hostname.split('.')[0] }}.key"
   changed_when: false
   register: etcd_status
@@ -19,7 +19,7 @@
     endpoint health --write-out=table
   environment:
     ETCDCTL_CACERT: "{{ etcd_pki_dir }}/{{ etcd_ca_crt_name }}"
-    ETCDCTL_CERT: "{{ etcd_pki_dir }}/{{ inventory_hostname.split('.')[0] }}.pem"
+    ETCDCTL_CERT: "{{ etcd_pki_dir }}/{{ inventory_hostname.split('.')[0] }}.crt"
     ETCDCTL_KEY: "{{ etcd_pki_dir }}/{{ inventory_hostname.split('.')[0] }}.key"
   changed_when: false
   register: etcd_health

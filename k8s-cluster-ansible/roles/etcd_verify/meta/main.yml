@@ -2,8 +2,21 @@
 galaxy_info:
   role_name: etcd_verify
   author: Mahin Raza
-  description: Verify external etcd cluster health and status
-  min_ansible_version: "2.15"
+  description: Verify health, members, and TLS configuration of external etcd cluster
+  company: personal-lab
   license: MIT
+  min_ansible_version: "2.14"
+
+  platforms:
+    - name: Ubuntu
+      versions:
+        - jammy
+
+  galaxy_tags:
+    - etcd
+    - verification
+    - healthcheck
+    - kubernetes
+    - ha
 
 dependencies: []
