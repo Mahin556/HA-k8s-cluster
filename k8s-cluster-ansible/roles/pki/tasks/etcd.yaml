@@ -36,13 +36,12 @@
     provider: ownca
     ownca_path: "{{ etcd_certs_dir }}/{{ etcd_ca_crt_name }}"
     ownca_privatekey_path: "{{ etcd_certs_dir }}/{{ etcd_ca_key_name }}"
-    ownca_privatekey_passphrase: "{{ etcd_ca_passphrase }}"
     ownca_not_after: "+365d"
     ownca_not_before: "-1d"
   register: etcd_certificate
 
 - name: Write etcd certificate for {{ short_name }}
   copy:
-    dest: "{{ etcd_certs_dir }}/{{ short_name }}.pem"
+    dest: "{{ etcd_certs_dir }}/{{ short_name }}.crt"
     content: "{{ etcd_certificate.certificate }}"
     mode: '0644'

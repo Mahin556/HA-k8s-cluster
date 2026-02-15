@@ -1,7 +1,6 @@
 - name: Generate etcd CA private key (encrypted)
   community.crypto.openssl_privatekey:
     path: "{{ etcd_certs_dir }}/{{ etcd_ca_key_name }}"
-    passphrase: "{{ etcd_ca_passphrase }}"
     size: 4096
     type: RSA
     mode: '0600'
@@ -9,7 +8,6 @@
 - name: Generate CSR for etcd CA
   community.crypto.openssl_csr_pipe:
     privatekey_path: "{{ etcd_certs_dir }}/{{ etcd_ca_key_name }}"
-    privatekey_passphrase: "{{ etcd_ca_passphrase }}"
     common_name: "etcd cluster"
     country_name: "IN"
     state_or_province_name: "Rajasthan"
@@ -30,7 +28,6 @@
     path: "{{ etcd_certs_dir }}/{{ etcd_ca_crt_name }}"
     csr_content: "{{ etcd_ca_csr.csr }}"
     privatekey_path: "{{ etcd_certs_dir }}/{{ etcd_ca_key_name }}"
-    privatekey_passphrase: "{{ etcd_ca_passphrase }}"
     provider: selfsigned
     selfsigned_not_after: "+3650d"
     selfsigned_not_before: "-1d"

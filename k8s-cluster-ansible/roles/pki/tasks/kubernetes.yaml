@@ -27,7 +27,6 @@
     provider: ownca
     ownca_path: "{{ etcd_certs_dir }}/{{ etcd_ca_crt_name }}"
     ownca_privatekey_path: "{{ etcd_certs_dir }}/{{ etcd_ca_key_name }}"
-    ownca_privatekey_passphrase: "{{ etcd_ca_passphrase }}"
     ownca_not_after: "+365d"
     ownca_not_before: "-1d"
   register: apiserver_etcd_cert

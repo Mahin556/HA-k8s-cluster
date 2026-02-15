@@ -5,7 +5,7 @@ galaxy_info:
   description: >
     Distributes PKI certificates and keys to etcd and master nodes
     for HA Kubernetes cluster setup.
-  company: Self
+  company: personal-lab
   license: MIT
   min_ansible_version: "2.15"
 

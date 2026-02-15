@@ -16,8 +16,8 @@
 
 - name: Copy etcd server certificate
   copy:
-    src: "{{ etcd_certs_dir }}/{{ short_name }}.pem"
-    dest: "{{ etcd_pki_dir }}/{{ short_name }}.pem"
+    src: "{{ etcd_certs_dir }}/{{ short_name }}.crt"
+    dest: "{{ etcd_pki_dir }}/{{ short_name }}.crt"
     mode: '0644'
 
 - name: Copy etcd server private key

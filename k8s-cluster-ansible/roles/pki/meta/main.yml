@@ -6,7 +6,7 @@ galaxy_info:
     Generates and manages PKI assets for HA Kubernetes cluster,
     including etcd CA, etcd node certificates, and
     kube-apiserver etcd client certificates.
-  company: Self
+  company: personal-lab
   license: MIT
   min_ansible_version: "2.15"
 
