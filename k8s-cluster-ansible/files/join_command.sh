@@ -1,0 +1,1 @@
+kubeadm join 192.168.29.100:6443 --token noc26n.9orez2h7xkdwseo4 --discovery-token-ca-cert-hash sha256:9c7f4b42a7a105a785984ce4bfc3811ab0eccb75628b29761e5348c25525a1f0 
