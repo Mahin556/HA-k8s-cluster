@@ -1,0 +1,17 @@
+---
+- name: Generate SSH key on first master
+  command: ssh-keygen -t rsa -b 4096 -N "" -f /home/{{ masterone_ssh_user }}/.ssh/ansible
+  args:
+    creates: "/home/{{ masterone_ssh_user }}/.ssh/ansible"
+  become: true
+  become_user: "{{ masterone_ssh_user }}"
+  when: masterone_ssh_user != 'root'
+
+- name: Generate SSH key on first master
+  command: ssh-keygen -t rsa -b 4096 -N "" -f /root/.ssh/ansible
+  args:
+    creates: "/root/.ssh/ansible"
+  become: true
+  become_user: "{{ masterone_ssh_user }}"
+  when: masterone_ssh_user == 'root'
+

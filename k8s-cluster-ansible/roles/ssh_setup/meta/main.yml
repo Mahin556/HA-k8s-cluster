@@ -1,0 +1,21 @@
+---
+galaxy_info:
+  role_name: ssh_config
+  author: Mahin Raza
+  description: Configure SSH user, keys, and Git SSH access between masterone and mastertwo,masterthree for /etc/kubernetes/pki distribution and HA cluster setup.
+  company: personal-lab
+  license: MIT
+  min_ansible_version: "2.14"
+
+  platforms:
+    - name: Ubuntu
+      versions:
+        - jammy
+
+  galaxy_tags:
+    - ssh
+    - git
+    - security
+    - automation
+
+dependencies: []

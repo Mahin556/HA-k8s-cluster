@@ -1,0 +1,11 @@
+---
+- import_tasks: create_user.yml
+
+- import_tasks: generate_key.yml
+  when: inventory_hostname == first_master
+
+- import_tasks: fetch_key.yml
+  when: inventory_hostname == first_master
+
+- import_tasks: distribute_key.yml
+  when: inventory_hostname in additional_masters

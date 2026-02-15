@@ -1,0 +1,33 @@
+---
+- name: Ensure ansible user exists
+  user:
+    name: "{{ masterone_ssh_user }}"
+    shell: /bin/bash
+    create_home: yes
+  when: inventory_hostname == first_master
+
+- name: Ensure ansible user exists
+  user:
+    name: "{{ other_ssh_user }}"
+    shell: /bin/bash
+    create_home: yes
+  when: inventory_hostname in additional_masters
+
+- name: Ensure sudo without password
+  copy:
+    dest: "/etc/sudoers.d/{{ masterone_ssh_user }}"
+    content: "{{ masterone_ssh_user }} ALL=(ALL) NOPASSWD:ALL"
+    mode: '0440'
+  when: inventory_hostname == first_master
+
+- name: Ensure sudo without password
+  copy:
+    dest: "/etc/sudoers.d/{{ other_ssh_user }}"
+    content: "{{ other_ssh_user }} ALL=(ALL) NOPASSWD:ALL"
+    mode: '0440'
+  when: inventory_hostname in additional_masters
+
+- name: Install rsync
+  package:
+    name: rsync
+    state: present

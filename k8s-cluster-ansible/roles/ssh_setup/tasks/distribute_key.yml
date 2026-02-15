@@ -1,0 +1,7 @@
+---
+- name: Distribute SSH public key to additional masters
+  authorized_key:
+    user: "{{ other_ssh_user }}"
+    key: "{{ lookup('file', files_dir ~ '/ansible.pub') }}"
+  
+

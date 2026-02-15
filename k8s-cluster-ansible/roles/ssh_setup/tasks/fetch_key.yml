@@ -1,0 +1,16 @@
+---
+- name: Fetch public key from first master
+  fetch:
+    src: "/home/{{ masterone_ssh_user }}/.ssh/ansible.pub"
+    dest: "{{ files_dir }}/ansible.pub"
+    flat: yes
+  when: masterone_ssh_user != 'root'
+  run_once: true
+
+- name: Fetch public key from first master
+  fetch:
+    src: "/root/.ssh/ansible.pub"
+    dest: "{{ files_dir }}/ansible.pub"
+    flat: yes
+  when: masterone_ssh_user == 'root'
+  run_once: true
