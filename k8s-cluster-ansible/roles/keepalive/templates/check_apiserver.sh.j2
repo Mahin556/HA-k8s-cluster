@@ -6,13 +6,13 @@ errorExit() {
 }
 
 # Check HAProxy locally
-curl --silent --max-time 2 --insecure https://localhost:{{ haproxy.listen_port }}/ -o /dev/null \
-  || errorExit "HAProxy is not responding on localhost:{{ haproxy.listen_port }}"
+curl --silent --max-time 2 --insecure https://localhost:{{ haproxy.api_port }}/ -o /dev/null \
+  || errorExit "HAProxy is not responding on localhost:{{ haproxy.api_port }}"
 
 # If this node owns the VIP, verify VIP access
 if ip addr | grep -q {{ keepalive.virtual_ip }}; then
-  curl --silent --max-time 2 --insecure https://{{ keepalive.virtual_ip }}:{{ haproxy.listen_port }}/ -o /dev/null \
-    || errorExit "VIP {{ keepalive.virtual_ip }}:{{ haproxy.listen_port }} is not responding"
+  curl --silent --max-time 2 --insecure https://{{ keepalive.virtual_ip }}:{{ haproxy.api_port }}/ -o /dev/null \
+    || errorExit "VIP {{ keepalive.virtual_ip }}:{{ haproxy.api_port }} is not responding"
 fi
 
 exit 0
