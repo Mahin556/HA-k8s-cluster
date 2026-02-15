@@ -1,0 +1,22 @@
+- name: Create .kube directory for {{ users  }} users
+  file:
+    path: /home/{{ user }}/.kube
+    state: directory
+    mode: '0755'
+    owner: "{{ user }}"
+    group: "{{ user }}"
+  loop: "{{ users }}"
+  loop_control:
+    loop_var: user
+
+- name: Copy kubeconfig for {{ users  }} users
+  ansible.builtin.copy:
+    src: /etc/kubernetes/admin.conf
+    dest: /home/{{ user }}/.kube/config
+    remote_src: yes
+    owner: "{{ user }}"
+    group: "{{ user }}"
+    mode: '0644'
+  loop: "{{ users }}"
+  loop_control:
+    loop_var: user

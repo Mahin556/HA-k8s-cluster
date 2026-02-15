@@ -1,0 +1,27 @@
+- name: Generate kubeadm config
+  include_tasks: config.yaml
+  when: inventory_hostname == first_master
+
+- name: Initialize first control plane
+  include_tasks: init.yaml
+  when: inventory_hostname == first_master
+
+- name: Configure users
+  include_tasks: users.yaml
+  when: inventory_hostname == first_master
+
+- name: Install CNI
+  include_tasks: cni.yaml
+  when: inventory_hostname == first_master
+
+- name: Sync first master certs to other masters
+  include_tasks: copy_certs.yaml
+  when: inventory_hostname in additional_masters
+
+- name: Pull control plane images
+  include_tasks: images.yaml
+  when: inventory_hostname in additional_masters
+
+- name: Join additional control planes
+  include_tasks: join_masters.yaml
+  when: inventory_hostname in additional_masters

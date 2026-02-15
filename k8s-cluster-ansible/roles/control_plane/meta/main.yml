@@ -1,0 +1,30 @@
+---
+galaxy_info:
+  role_name: control_plane
+  author: Mahin Raza
+  description: >
+    Configures Kubernetes control-plane node using kubeadm.
+    Initializes cluster (first master) and joins additional
+    control-plane nodes in HA setup.
+
+  company: personal-lab
+  license: MIT
+
+  min_ansible_version: "2.14"
+
+  platforms:
+    - name: Ubuntu
+      versions:
+        - jammy
+        - focal
+
+  galaxy_tags:
+    - kubernetes
+    - kubeadm
+    - control-plane
+    - master
+    - ha
+    - cluster
+    - devops
+
+dependencies: []

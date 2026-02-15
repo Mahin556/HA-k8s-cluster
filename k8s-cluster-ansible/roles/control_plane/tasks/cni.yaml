@@ -1,0 +1,5 @@
+- name: Install Calico CNI
+  command: kubectl apply -f https://docs.tigera.io/calico/latest/manifests/calico.yaml
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  

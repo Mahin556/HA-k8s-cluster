@@ -1,0 +1,55 @@
+apiVersion: kubeadm.k8s.io/v1beta4
+kind: ClusterConfiguration
+clusterName: kubernetes
+kubernetesVersion: "{{ kubernetes_version }}.0"
+
+# Load balancer / VIP (MANDATORY for HA)
+controlPlaneEndpoint: "{{ control_plane_endpoint }}"
+
+networking:
+  podSubnet: "{{ pod_subnet }}"
+  serviceSubnet: "{{ service_subnet }}"
+
+etcd:
+  external:
+    endpoints:
+{% for ep in groups['etcd'] %}
+      - "https://{{ ep }}:2379"
+{% endfor %}
+    caFile: "{{ api_server_pki_dir }}/{{ etcd_ca_crt_name}}"
+    certFile: "{{ api_server_pki_dir }}/{{ api_server_crt_name }}"
+    keyFile: "{{ api_server_pki_dir }}/{{ api_server_key_name }}"
+
+apiServer:
+  certSANs:
+    - localhost
+    - 127.0.0.1
+    - "{{ control_plane_endpoint.split(':')[0] }}"
+{% for host in groups['masters'] %}
+    - "{{ host }}"
+    - "{{ hostvars[host].ansible_host }}"
+    - "{{ host.split('.')[0] }}"
+{% endfor %}
+
+---
+apiVersion: kubeadm.k8s.io/v1beta4
+kind: InitConfiguration
+localAPIEndpoint:
+  advertiseAddress: {{ ansible_host }}
+  bindPort: 6443
+
+nodeRegistration:
+  name: {{ inventory_hostname }}
+  criSocket: {{ cri_socket }}
+
+---
+apiVersion: kubelet.config.k8s.io/v1beta1
+kind: KubeletConfiguration
+
+serializeImagePulls: false
+maxParallelImagePulls: 10
+
+evictionHard:
+  memory.available: "200Mi"
+  nodefs.available: "20%"
+  nodefs.inodesFree: "5%"

@@ -1,0 +1,16 @@
+- name: Ensure PKI directory exists on additional masters
+  file:
+    path: /etc/kubernetes/pki
+    state: directory
+    mode: '0755'
+  become: true
+
+- name: Sync entire PKI directory from first master
+  ansible.posix.synchronize:
+    src: /etc/kubernetes/pki/
+    dest: /etc/kubernetes/pki/
+    archive: yes
+    mode: push
+    rsync_path: "sudo rsync"
+  delegate_to: "{{ first_master }}"
+

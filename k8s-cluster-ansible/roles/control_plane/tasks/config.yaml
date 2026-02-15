@@ -1,0 +1,5 @@
+- name: Create kubeadm config file
+  template:
+    src: kubeadm-config.yaml.j2
+    dest: /root/kubeadm-config.yaml
+  
