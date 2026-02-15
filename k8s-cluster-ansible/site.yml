@@ -1,0 +1,131 @@
+---
+- name: Generate PKI
+  hosts: localhost
+  gather_facts: false
+  roles:
+    - pki
+  tags: 
+    - pki_create
+    - pki
+
+
+- name: Distribute etcd certificates
+  hosts: etcd
+  become: true
+  roles:
+    - pki_distribution
+  tags:
+    - pki_distribution
+    - pki_distribution_etcd
+    - pki
+
+
+- name: Distribute apiserver etcd client cert
+  hosts: masters
+  become: true
+  roles:
+    - pki_distribution
+  tags:
+    - pki_distribution
+    - pki_distribution_master
+    - pki
+
+
+- name: Setup etcd cluster
+  hosts: etcd
+  become: true
+  serial: 1
+  roles:
+    - etcd
+  tags: 
+    - etcd_config
+    - etcd
+
+
+- name: Verify etcd cluster
+  hosts: "{{ groups['etcd'][0] }}"
+  become: true
+  gather_facts: false
+  roles:
+    - etcd_verify
+  tags:
+    - etcd_verify
+    - etcd
+
+
+- name: Setup Load Balancers
+  hosts: loadbalancer
+  become: true
+  roles:
+    - keepalive
+  tags:
+    - lb
+    - keepalive
+
+
+- name: Setup Load Balancers
+  hosts: loadbalancer
+  become: true
+  roles:
+    - haproxy
+  tags:
+    - lb
+    - haproxy
+
+
+- name: Install Kubernetes components
+  hosts: k8s_cluster
+  become: true
+  roles:
+    - common
+  tags:
+    - common
+    - control_plane
+    - data_plane
+    - kubernetes
+
+- name: Configure SSH between control planes
+  hosts: k8s_cluster
+  become: true
+  roles:
+    - ssh_setup
+  tags:
+    - ssh_setup
+    - control_plane
+    - data_plane
+    - kubernetes
+
+- name: Install Kubernetes components
+  hosts: masterone.example.com
+  become: true
+  roles:
+    - control_plane
+  tags:
+    - first_master
+    - control_plane
+    - masters
+    - kubernetes
+
+
+- name: Install Kubernetes components
+  hosts: mastertwo.example.com:masterthree.example.com
+  become: true
+  roles:
+    - control_plane
+  tags:
+    - additional_masters
+    - control_plane
+    - masters
+    - kubernetes
+
+
+- name: Install Kubernetes components
+  hosts: workers
+  become: true
+  roles:
+    - data_plane
+  tags:
+    - workers
+    - data_plane
+    - workers
+    - kubernetes
