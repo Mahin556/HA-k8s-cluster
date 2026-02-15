@@ -1,0 +1,68 @@
+- name: Install required base packages
+  apt:
+    name:
+      - apt-transport-https
+      - ca-certificates
+      - curl
+      - gnupg
+      - lsb-release
+      - software-properties-common
+      - rsync  
+    state: present
+    update_cache: yes
+
+- name: Ensure keyrings directory exists
+  file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: '0755'
+
+# -----------------------------
+# Kubernetes Repo
+# -----------------------------
+
+- name: Download Kubernetes GPG key
+  get_url:
+    url: "https://pkgs.k8s.io/core:/stable:/{{ kubernetes_version }}/deb/Release.key"
+    dest: /tmp/kubernetes.key
+
+- name: Convert Kubernetes key to gpg
+  command: >
+    gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg /tmp/kubernetes.key
+  args:
+    creates: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+
+- name: Add Kubernetes repository
+  apt_repository:
+    repo: "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/{{ kubernetes_version }}/deb/ /"
+    filename: kubernetes
+    state: present
+
+# -----------------------------
+# CRI-O Repo
+# -----------------------------
+
+- name: Download CRI-O GPG key
+  get_url:
+    url: "https://download.opensuse.org/repositories/isv:/cri-o:/stable:/{{ crio_version }}/deb/Release.key"
+    dest: /tmp/crio.key
+
+- name: Convert CRI-O key to gpg
+  command: >
+    gpg --dearmor -o /etc/apt/keyrings/cri-o-apt-keyring.gpg /tmp/crio.key
+  args:
+    creates: /etc/apt/keyrings/cri-o-apt-keyring.gpg
+
+- name: Add CRI-O repository
+  apt_repository:
+    repo: "deb [signed-by=/etc/apt/keyrings/cri-o-apt-keyring.gpg] https://download.opensuse.org/repositories/isv:/cri-o:/stable:/{{ crio_version }}/deb/ /"
+    filename: cri-o
+    state: present
+
+# -----------------------------
+# FINAL apt update
+# -----------------------------
+
+- name: Update apt cache after adding repositories
+  apt:
+    update_cache: yes

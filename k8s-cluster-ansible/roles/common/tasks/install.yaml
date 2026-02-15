@@ -1,0 +1,25 @@
+- name: Install CRI-O packages
+  apt:
+    name: "{{ crio_packages }}"
+    state: present
+  become: true
+
+- name: Install Kubernetes packages
+  apt:
+    name: "{{ k8s_packages }}"
+    state: present
+  become: true
+
+- name: Hold Kubernetes packages
+  dpkg_selections:
+    name: "{{ item }}"
+    selection: hold
+  loop: "{{ k8s_packages }}"
+  become: true
+
+- name: Enable and start CRI-O
+  systemd:
+    name: crio
+    enabled: true
+    state: started
+  become: true

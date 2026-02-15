@@ -1,0 +1,6 @@
+---
+# tasks file for common
+- import_tasks: prerequisites.yaml
+- import_tasks: repo.yaml
+- import_tasks: install.yaml
+- import_tasks: verify.yaml

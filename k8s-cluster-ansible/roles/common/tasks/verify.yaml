@@ -1,0 +1,28 @@
+---
+- name: Check kubeadm version
+  command: kubeadm version -o short
+  register: kubeadm_version
+  changed_when: false
+
+- name: Check kubelet version
+  command: kubelet --version
+  register: kubelet_version
+  changed_when: false
+
+- name: Check kubectl version
+  command: kubectl version --client 
+  register: kubectl_version
+  changed_when: false
+
+- name: Verify CRI-O is installed
+  command: crio --version
+  register: crio_version
+  changed_when: false
+
+- name: Show versions
+  debug:
+    msg: |
+      kubeadm: {{ kubeadm_version.stdout }}
+      kubelet: {{ kubelet_version.stdout }}
+      kubectl: {{ kubectl_version.stdout }}
+      CRI-O: {{ crio_version.stdout }}
