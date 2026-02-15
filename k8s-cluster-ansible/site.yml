@@ -129,3 +129,33 @@
     - data_plane
     - workers
     - kubernetes
+
+- name: Deploy Ingress Controller
+  hosts: masterone.example.com,loadbalancer
+  become: true
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  roles:
+    - ingress_haproxy
+  tags:
+    - ingress
+    - haproxy
+    - kubernetes
+    
+- name: Deploy test application
+  hosts: masterone.example.com
+  become: true
+  vars:
+    virtualenv_name: "my-venv"
+  module_defaults:
+    kubernetes.core.k8s:
+      kubeconfig: /etc/kubernetes/admin.conf
+    kubernetes.core.k8s_info:
+      kubeconfig: /etc/kubernetes/admin.conf
+  # environment:
+  #   KUBECONFIG: /etc/kubernetes/admin.conf
+  roles:
+    - test_deploy
+  tags:
+    - test_deploy
+    - kubernetes
