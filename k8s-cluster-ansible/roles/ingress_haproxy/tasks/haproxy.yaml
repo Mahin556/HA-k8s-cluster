@@ -1,0 +1,12 @@
+- name: Update the haproxy configuration file
+  ansible.builtin.blockinfile:
+    path: /etc/haproxy/haproxy.cfg
+    block: "{{ lookup('template', 'templates/haproxy.cfg.j2') }}"
+    insertafter: EOF
+    marker: "# {mark} ANSIBLE MANAGED BLOCK FOR MYAPP"
+
+- name: Restart haproxy
+  ansible.builtin.service:
+    name: haproxy
+    state: restarted
+

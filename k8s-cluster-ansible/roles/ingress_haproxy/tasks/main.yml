@@ -1,0 +1,9 @@
+---
+# tasks file for ingress_haproxy
+- import_tasks: install.yaml
+
+- include_tasks: haproxy.yaml
+  when: inventory_hostname in groups['loadbalancer']
+
+- include_tasks: ingress.yaml
+  when: inventory_hostname == first_master

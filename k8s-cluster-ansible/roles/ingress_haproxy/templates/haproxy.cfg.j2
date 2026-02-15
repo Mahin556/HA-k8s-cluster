@@ -1,0 +1,24 @@
+frontend http
+    bind *:80
+    mode tcp
+    default_backend ingress-http
+
+backend ingress-http
+    mode tcp
+    balance roundrobin
+{% for worker in groups['workers'] %}
+    server {{ worker.split('.')[0] }} {{ hostvars[worker].ansible_host }}:{{ ingress.http_nodeport }} check
+{% endfor %}
+
+
+frontend https
+    bind *:443
+    mode tcp
+    default_backend ingress-https
+
+backend ingress-https
+    mode tcp
+    balance roundrobin
+{% for worker in groups['workers'] %}
+    server {{ worker.split('.')[0] }} {{ hostvars[worker].ansible_host }}:{{ ingress.https_nodeport }} check
+{% endfor %}

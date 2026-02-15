@@ -1,0 +1,49 @@
+- name: Deploy ingress controller
+  kubernetes.core.k8s:
+    state: present
+    src: https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.9.6/deploy/static/provider/baremetal/deploy.yaml
+
+- name: Wait for ingress controller to be ready
+  kubernetes.core.k8s_info:
+    kind: Deployment
+    namespace: ingress-nginx
+    name: ingress-nginx-controller
+  register: ingress_controller_deployment
+  until:
+    - ingress_controller_deployment.resources | length > 0
+    - ingress_controller_deployment.resources[0].status.readyReplicas is defined
+    - ingress_controller_deployment.resources[0].status.readyReplicas == ingress_controller_deployment.resources[0].status.replicas
+  retries: 20
+  delay: 5
+
+- name: Convert ingress-nginx service to NodePort
+  kubernetes.core.k8s:
+    state: patched
+    name: ingress-nginx-controller  # Name of the existing service
+    namespace: ingress-nginx  # Namespace of the service
+    kind: Service
+    api_version: v1
+    apply: yes
+    definition:
+      spec:
+        ports:
+          - name: http
+            port: 80
+            targetPort: http
+            protocol: TCP
+            nodePort: 32059
+          - name: https
+            port: 443
+            targetPort: https
+            protocol: TCP
+            nodePort: 32423
+
+
+- name: Check ingress service
+  command: kubectl get svc ingress-nginx-controller -n ingress-nginx
+  register: ingress_svc
+
+- debug:
+    var: ingress_svc.stdout
+
+
