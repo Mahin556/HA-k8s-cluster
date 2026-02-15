@@ -4,9 +4,9 @@ Type=exec
 ExecStart=/usr/local/bin/etcd \
   --name {{ inventory_hostname.split('.')[0] }} \
   --data-dir={{ etcd_data_dir }} \
-  --cert-file={{ etcd_pki_dir }}/{{ inventory_hostname.split('.')[0] }}.pem \
+  --cert-file={{ etcd_pki_dir }}/{{ inventory_hostname.split('.')[0] }}.crt \
   --key-file={{ etcd_pki_dir }}/{{ inventory_hostname.split('.')[0] }}.key \
-  --peer-cert-file={{ etcd_pki_dir }}/{{ inventory_hostname.split('.')[0] }}.pem \
+  --peer-cert-file={{ etcd_pki_dir }}/{{ inventory_hostname.split('.')[0] }}.crt \
   --peer-key-file={{ etcd_pki_dir }}/{{ inventory_hostname.split('.')[0] }}.key \
   --trusted-ca-file={{ etcd_pki_dir }}/{{ etcd_ca_crt_name }} \
   --peer-trusted-ca-file={{ etcd_pki_dir }}/{{ etcd_ca_crt_name }} \

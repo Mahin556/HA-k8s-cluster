@@ -1,15 +1,15 @@
-- name: Download foo.conf
+- name: Download etcd binary
   ansible.builtin.get_url:
     url: "https://github.com/etcd-io/etcd/releases/download/{{ etcd_version }}/etcd-{{ etcd_version }}-linux-amd64.tar.gz"
     dest: /tmp/
 
-- name: Extract foo.tgz into /var/lib/foo
+- name: Extract etcd tarball
   ansible.builtin.unarchive:
     src: /tmp/etcd-{{ etcd_version }}-linux-amd64.tar.gz
     dest: /tmp/
     remote_src: yes
 
-- name: moving
+- name: Move etcd binaries to /usr/local/bin
   ansible.builtin.shell: "mv /tmp/etcd-${ETCD_VER}-linux-amd64/etcd* /usr/local/bin/"
   environment:
     ETCD_VER: "{{ etcd_version }}"
