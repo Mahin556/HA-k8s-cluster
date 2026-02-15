@@ -143,7 +143,7 @@ HA-k8s-cluster/                         # Root project directory for HA Kubernet
 ```
 ---
 
-### Generate a SSH keys for ansible
+### Generate SSH Keys for Ansible
 ```bash
 $ ssh-keygen -t ed25519 -b 4096 C "your_comment" -f ~/.ssh/ansible
 ```
@@ -163,6 +163,7 @@ $ ssh-keygen -t ed25519 -b 4096 C "your_comment" -f ~/.ssh/ansible
 | Load Balancer | lbone.example.com       | 192.168.29.81 | Ubuntu 22.04 | 1G  | 1   |
 | Load Balancer | lbtwo.example.com       | 192.168.29.82 | Ubuntu 22.04 | 1G  | 1   |
 | Worker 1      | workerone.example.com   | 192.168.29.71 | Ubuntu 22.04 | 1G  | 1   |
+| Worker 2      | workertwo.example.com   | 192.168.29.72 | Ubuntu 22.04 | 1G  | 1   |
 
 ```bash
 # Start servers
@@ -216,7 +217,7 @@ The VIP is managed by **Keepalived** and floats between `lbone` and `lbtwo`.
 
 ---
 
-### 
+### Ansible Setup
 ```bash
 # Export ansible.cfg file
 $ export ANSIBLE_CONFIG=~/HA-k8s-cluster/k8s-cluster-ansible/ansible.cfg
@@ -225,108 +226,50 @@ $ export ANSIBLE_CONFIG=~/HA-k8s-cluster/k8s-cluster-ansible/ansible.cfg
 $ ansible-galaxy collection install -r collections/requirements.yml -p ~/HA-k8s-cluster/k8s-cluster-ansible/collections/
 ```
 
-###  To decrypt the private key
+### Operational Commands
 ```bash
-k8s-cluster-ansible/
-├── ansible.cfg
-├── .vault_dev
-├── .vault_stage
-├── .vault_prod
-├── inventory/
-│   ├── dev/
-│   ├── staging/
-│   └── production/
+ansible-playbook playbooks/site.yml
 
-echo "DevPassword123" > .vault_dev
-echo "StagePassword123" > .vault_stage
-echo "ProdPassword123" > .vault_prod
-chmod 600 .vault_*
+ANSIBLE_STDOUT_CALLBACK=minimal ansible-playbook playbooks/site.yml --tags=etcd_verify #Output etcd cluster health and status
 
-[defaults]
-inventory = inventory/production/hosts.ini
-vault_identity_list = dev@.vault_dev,stage@.vault_stage,prod@.vault_prod
+ansible-playbook playbooks/site.yml --tags=etcd_verify -e="overwrite_logs=true" #Overwrite the etcd_verify.log health and status logs
 
-ansible-vault create inventory/dev/group_vars/all/vault.yml --encrypt-vault-id dev
-ansible-vault create inventory/staging/group_vars/all/vault.yml --encrypt-vault-id stage
-ansible-vault create inventory/production/group_vars/all/vault.yml --encrypt-vault-id prod
-
-#They do NOT store .vault_dev in project.
-export ANSIBLE_VAULT_IDENTITY_LIST="prod@/secure/path/prod_pass"
-#Or CI/CD injects it.
-
-ansible-playbook -i inventory/dev/hosts.ini playbooks/site.yml
-ansible-playbook -i inventory/staging/hosts.ini playbooks/site.yml
-ansible-playbook -i inventory/production/hosts.ini playbooks/site.yml
-```
-```bash
-✅ HOW VAULT IDENTITY AUTO-DECRYPT WORKS
-
-1) In ansible.cfg:
-
-   vault_identity_list = dev@.vault_dev,stage@.vault_stage,prod@.vault_prod
-
-   This means:
-   - dev   → use .vault_dev
-   - stage → use .vault_stage
-   - prod  → use .vault_prod
-
-
-2) When you run:
-
-   ansible-playbook -i inventory/production/hosts.ini playbooks/site.yml
-
-
-3) Ansible does this automatically:
-
-   ✔ Loads vault.yml from production inventory
-   ✔ Reads first line of encrypted file:
-     
-     $ANSIBLE_VAULT;1.2;AES256;prod
-
-   ✔ Sees vault ID = prod
-   ✔ Matches it with:
-     
-     prod@.vault_prod
-
-   ✔ Uses .vault_prod password
-   ✔ Decrypts file in memory
-   ✔ Uses variables normally
-
-
-4) You DO NOT need:
-
-   ❌ --ask-vault-pass
-   ❌ --vault-password-file
-   ❌ --encrypt-vault-id (during playbook run)
-
-
-5) It works automatically IF:
-
-   ✔ vault_identity_list is configured
-   ✔ vault file has correct vault ID
-   ✔ password file exists
-   ✔ permissions are correct (chmod 600)
-
-
-Result:
-Ansible automatically selects the correct password
-and decrypts the variables in memory at runtime.
-```
-```bash
-ANSIBLE_STDOUT_CALLBACK=minimal ansible-playbook playbooks/site.yml --tags=etcd_verify -e="overwrite_logs=true"
-ansible-playbook playbooks/site.yml --tags=etcd_verify -e="overwrite_logs=true"
-```
-```bash
 ansible-playbook playbooks/site.yml \
 --tags=keepalive \
--e "keepalive_configure=false keepalive_verify=true"
+-e "keepalive_configure=false keepalive_verify=true" #Verify VIP assignment 
 
-ansible-playbook playbooks/site.yml --tags=keepalive -e "keepalive_configure=false keepalive_verify=false keepalive_failover=true"
+ansible-playbook playbooks/site.yml --tags=keepalive -e "keepalive_configure=false keepalive_verify=false keepalive_failover=true" #Failover test of keepalive
 ```
 
-
----
-
+### HA Cluster Tag Reference
+| Category                  | Tag                       | Theory (What it does)                                      | Command                                                    |
+| ------------------------- | ------------------------- | ---------------------------------------------------------- | ---------------------------------------------------------- |
+| **PKI**                   | `pki_create`              | Generates CA and all TLS certificates (runs on localhost)  | `ansible-playbook site.yml --tags pki_create`              |
+| PKI                       | `pki_distribution`        | Copies certificates to etcd and master nodes               | `ansible-playbook site.yml --tags pki_distribution`        |
+| PKI                       | `pki_distribution_etcd`   | Distributes etcd CA + node certs only to etcd servers      | `ansible-playbook site.yml --tags pki_distribution_etcd`   |
+| PKI                       | `pki_distribution_master` | Distributes apiserver-etcd client cert to masters          | `ansible-playbook site.yml --tags pki_distribution_master` |
+| PKI                       | `pki`                     | Runs full PKI workflow (create + distribute)               | `ansible-playbook site.yml --tags pki`                     |
+| **ETCD**                  | `etcd_config`             | Installs and configures etcd cluster (Raft quorum setup)   | `ansible-playbook site.yml --tags etcd_config`             |
+| ETCD                      | `etcd_verify`             | Verifies etcd health, leader and endpoints                 | `ansible-playbook site.yml --tags etcd_verify`             |
+| ETCD                      | `etcd`                    | Runs full etcd setup (config + verify)                     | `ansible-playbook site.yml --tags etcd`                    |
+| **LOAD BALANCER**         | `keepalive`               | Configures VRRP and floating VIP using Keepalived          | `ansible-playbook site.yml --tags keepalive`               |
+| LOAD BALANCER             | `haproxy`                 | Installs and configures HAProxy for API load balancing     | `ansible-playbook site.yml --tags haproxy`                 |
+| LOAD BALANCER             | `lb`                      | Runs full load balancer setup (keepalive + haproxy)        | `ansible-playbook site.yml --tags lb`                      |
+| **KUBERNETES**            | `common`                  | Prepares OS and installs kubeadm, kubelet, kubectl         | `ansible-playbook site.yml --tags common`                  |
+| KUBERNETES                | `ssh_setup`               | Configures passwordless SSH between control-plane nodes    | `ansible-playbook site.yml --tags ssh_setup`               |
+| KUBERNETES                | `first_master`            | Runs `kubeadm init` to bootstrap cluster                   | `ansible-playbook site.yml --tags first_master`            |
+| KUBERNETES                | `additional_masters`      | Joins extra control-plane nodes                            | `ansible-playbook site.yml --tags additional_masters`      |
+| KUBERNETES                | `workers`                 | Joins worker nodes to cluster                              | `ansible-playbook site.yml --tags workers`                 |
+| KUBERNETES                | `control_plane`           | Runs full control-plane setup                              | `ansible-playbook site.yml --tags control_plane`           |
+| KUBERNETES                | `data_plane`              | Runs worker node setup                                     | `ansible-playbook site.yml --tags data_plane`              |
+| KUBERNETES                | `kubernetes`              | Deploys full Kubernetes stack (common + masters + workers) | `ansible-playbook site.yml --tags kubernetes`              |
+| **FULL DEPLOYMENT ORDER** | Step 1                    | Generate and distribute certificates                       | `ansible-playbook site.yml --tags pki`                     |
+| FULL DEPLOYMENT ORDER     | Step 2                    | Setup external etcd cluster                                | `ansible-playbook site.yml --tags etcd`                    |
+| FULL DEPLOYMENT ORDER     | Step 3                    | Configure highly available load balancer                   | `ansible-playbook site.yml --tags lb`                      |
+| FULL DEPLOYMENT ORDER     | Step 4                    | Deploy full Kubernetes cluster                             | `ansible-playbook site.yml --tags kubernetes`              |
+| **DEBUG / MAINTENANCE**   | etcd check                | Verify etcd health only                                    | `ansible-playbook site.yml --tags etcd_verify`             |
+| DEBUG / MAINTENANCE       | VIP reconfigure           | Reconfigure / verify VIP failover                          | `ansible-playbook site.yml --tags keepalive`               |
+| DEBUG / MAINTENANCE       | Rejoin workers            | Rejoin worker nodes                                        | `ansible-playbook site.yml --tags workers`                 |
 
 
 ---
