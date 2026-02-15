@@ -232,7 +232,7 @@ ansible-playbook playbooks/site.yml
 
 ANSIBLE_STDOUT_CALLBACK=minimal ansible-playbook playbooks/site.yml --tags=etcd_verify #Output etcd cluster health and status
 
-ansible-playbook playbooks/site.yml --tags=etcd_verify -e="overwrite_logs=true" #Overwrite the etcd_verify.log health and status logs
+ansible-playbook site.yml --tags=etcd_verify -e="overwrite_logs=true" #Overwrite the etcd_verify.log health and status logs
 
 ansible-playbook playbooks/site.yml \
 --tags=keepalive \
@@ -271,6 +271,9 @@ ansible-playbook playbooks/site.yml --tags=keepalive -e "keepalive_configure=fal
 | DEBUG / MAINTENANCE       | VIP reconfigure           | Reconfigure / verify VIP failover                          | `ansible-playbook site.yml --tags keepalive`               |
 | DEBUG / MAINTENANCE       | Rejoin workers            | Rejoin worker nodes                                        | `ansible-playbook site.yml --tags workers`                 |
 
+```bash
+ansible-playbook site.yml --tags pki,etcd,etcd_verify,lb,kubernetes
+```
 
 ---
 
@@ -437,3 +440,4 @@ Responsibility separation:
 * [https://youtu.be/Apwbp4-CZno](https://youtu.be/Apwbp4-CZno)
 * https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/high-availability/
 * https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/setup-ha-etcd-with-kubeadm/
+* https://github.com/NikKumar811/ansible_basics_to_advance

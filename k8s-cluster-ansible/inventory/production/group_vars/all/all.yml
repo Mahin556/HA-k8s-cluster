@@ -20,3 +20,7 @@ first_master: "masterone.example.com"
 additional_masters: 
   - "mastertwo.example.com"
   - "masterthree.example.com"
+
+ingress:
+  http_nodeport: 32059
+  https_nodeport: 32423
