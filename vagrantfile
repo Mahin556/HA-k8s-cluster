@@ -82,7 +82,7 @@ Vagrant.configure("2") do |config|
   # =============================
   # WORKER NODES
   # =============================
-  Worker_Node_Count = 1
+  Worker_Node_Count = 2
 
   (1..Worker_Node_Count).each do |i|
     name = NUM_WORDS[i]
