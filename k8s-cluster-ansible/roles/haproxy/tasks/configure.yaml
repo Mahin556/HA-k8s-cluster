@@ -15,9 +15,8 @@
   failed_when: haproxy_config_check.rc != 0
   become: true
 
-- name: Enable HAProxy
-  systemd:
-    name: haproxy
-    enabled: true
-    state: started
-  become: true
+- name: Run handler immediately
+  meta: flush_handlers
+
+
+
