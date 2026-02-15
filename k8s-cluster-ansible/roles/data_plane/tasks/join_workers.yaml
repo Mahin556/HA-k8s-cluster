@@ -1,0 +1,12 @@
+- name: Read join command
+  slurp:
+    src: "{{ files_dir }}/join_command.sh"
+  delegate_to: localhost
+  run_once: true
+  register: join_file
+
+- name: Join worker
+  command: "{{ join_file.content | b64decode }}"
+  args:
+    creates: /etc/kubernetes/kubelet.conf
+

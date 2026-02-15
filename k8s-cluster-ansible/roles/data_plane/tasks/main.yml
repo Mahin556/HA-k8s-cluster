@@ -1,0 +1,4 @@
+---
+# tasks file for data_plane
+- name: Join worker nodes
+  include_tasks: join_workers.yaml

@@ -1,0 +1,28 @@
+---
+galaxy_info:
+  role_name: data_plane
+  author: Mahin Raza
+  description: >
+    Configures Kubernetes worker node and joins it
+    to an existing Kubernetes cluster using kubeadm join.
+
+  company: personal-lab
+  license: MIT
+
+  min_ansible_version: "2.14"
+
+  platforms:
+    - name: Ubuntu
+      versions:
+        - jammy
+        - focal
+
+  galaxy_tags:
+    - kubernetes
+    - kubeadm
+    - worker
+    - node
+    - cluster
+    - devops
+
+dependencies: []
