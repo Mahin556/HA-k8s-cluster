@@ -54,3 +54,45 @@
   fail:
     msg: "Etcd cluster is unhealthy!"
   when: "'unhealthy' in etcd_health.stdout"
+
+- name: Write a test data to etcd cluster
+  command: >
+    etcdctl
+    --endpoints={% for host in groups['etcd'] %}https://{{ hostvars[host].ansible_host }}:2379{% if not loop.last %},{% endif %}{% endfor %}
+    put test_key test_value
+  environment:
+    ETCDCTL_CACERT: "{{ etcd_pki_dir }}/{{ etcd_ca_crt_name }}"
+    ETCDCTL_CERT: "{{ etcd_pki_dir }}/{{ inventory_hostname.split('.')[0] }}.crt"
+    ETCDCTL_KEY: "{{ etcd_pki_dir }}/{{ inventory_hostname.split('.')[0] }}.key"
+  register: etcd_put
+
+- name: Read the test data from etcd cluster
+  command: >
+    etcdctl
+    --endpoints={% for host in groups['etcd'] %}https://{{ hostvars[host].ansible_host }}:2379{% if not loop.last %},{% endif %}{% endfor %}
+    get test_key
+  environment:
+    ETCDCTL_CACERT: "{{ etcd_pki_dir }}/{{ etcd_ca_crt_name }}"
+    ETCDCTL_CERT: "{{ etcd_pki_dir }}/{{ inventory_hostname.split('.')[0] }}.crt"
+    ETCDCTL_KEY: "{{ etcd_pki_dir }}/{{ inventory_hostname.split('.')[0] }}.key"
+  register: etcd_get
+
+- name: Delete the test data from etcd cluster
+  command: >
+    etcdctl
+    --endpoints={% for host in groups['etcd'] %}https://{{ hostvars[host].ansible_host }}:2379{% if not loop.last %},{% endif %}{% endfor %}
+    del test_key
+  environment:
+    ETCDCTL_CACERT: "{{ etcd_pki_dir }}/{{ etcd_ca_crt_name }}"
+    ETCDCTL_CERT: "{{ etcd_pki_dir }}/{{ inventory_hostname.split('.')[0] }}.crt"
+    ETCDCTL_KEY: "{{ etcd_pki_dir }}/{{ inventory_hostname.split('.')[0] }}.key"
+  register: etcd_del
+
+- name: Assert that the test data is correct
+  assert:
+    that:
+      - etcd_put.rc == 0
+      - etcd_get.rc == 0
+      - etcd_del.rc == 0
+      - "'test_value' in etcd_get.stdout"
+    fail_msg: "Failed to verify etcd cluster read/write operations!" 
