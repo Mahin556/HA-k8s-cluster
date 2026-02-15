@@ -1,58 +1,231 @@
+### Project structure
 ```bash
+HA-k8s-cluster/                         # Root project directory for HA Kubernetes setup
+├── bootstrap.sh                        # Initial VM bootstrap script (SSH, users, rsync setup)
+├── calico.yaml                         # Calico CNI manifest for Kubernetes networking
+├── etcd.md                             # Documentation notes for etcd testing
+├── files                               # Shared static files used outside Ansible roles
+│   ├── ansible.pub                     # Public SSH key for ansible user
+│   └── hosts                           # Hosts file for cluster nodes
+├── k8s-cluster-ansible                 # Main Ansible automation project
+│   ├── ansible.cfg                     # Ansible configuration file
+│   ├── collections/                    # Installed Ansible collections
+│   │   ├── ansible_collections/        # Downloaded Galaxy collections
+│   │   └── requirements.yml            # Collection dependency definition
+│   ├── files                           # Static files used by roles
+│   │   ├── ansible.pub                 # Public key distributed to mastertwo,masterthree node
+│   │   ├── join_command.sh             # Stored kubeadm join command
+│   │   ├── logs                        # Log storage directory
+│   │   │   └── etcd
+│   │   │       └── etcd_verify.log     # etcd cluster verification output log
+│   │   └── pki                         # Pre-generated PKI certificates
+│   │       ├── etcd                    # etcd CA and node certificates
+│   │       │   ├── etcd-ca.crt         # etcd CA certificate
+│   │       │   ├── etcd-ca.key         # etcd CA private key
+│   │       │   ├── etcdone.crt         # etcd node 1 certificate
+│   │       │   ├── etcdone.key         # etcd node 1 key
+│   │       │   ├── etcdthree.crt       # etcd node 3 certificate
+│   │       │   ├── etcdthree.key       # etcd node 3 key
+│   │       │   ├── etcdtwo.crt         # etcd node 2 certificate
+│   │       │   └── etcdtwo.key         # etcd node 2 key
+│   │       └── kubernetes              # Kubernetes API client certificates
+│   │           ├── apiserver_etcd_client.crt  # API server → etcd client cert
+│   │           └── apiserver_etcd_client.key  # API server → etcd client key
+│   ├── inventory                       # Inventory definitions
+│   │   └── production                  # Production environment inventory
+│   │       ├── group_vars              # Variables grouped by role/group
+│   │       │   ├── all
+│   │       │   │   └── all.yml         # Global variables for all hosts
+│   │       │   ├── etcd.yml            # Variables specific to etcd nodes
+│   │       │   ├── k8s_cluster.yml     # Kubernetes cluster variables
+│   │       │   └── loadbalancer.yml    # HAProxy / Keepalived variables
+│   │       └── hosts.ini               # Inventory host definitions
+│   ├── roles                           # All Ansible roles (modular automation)
+│   │   ├── common                      # Base OS configuration role
+│   │   │   ├── meta
+│   │   │   │   └── main.yml            # Role metadata
+│   │   │   └── tasks
+│   │   │       ├── install.yaml        # Base package installation
+│   │   │       ├── main.yml            # Entry task file
+│   │   │       ├── prerequisites.yaml  # System prerequisites (swap, modules, etc.)
+│   │   │       ├── repo.yaml           # Kubernetes & CRI repo setup
+│   │   │       └── verify.yaml         # System validation tasks
+│   │   ├── control_plane               # Kubernetes master node setup
+│   │   │   ├── meta
+│   │   │   │   └── main.yml
+│   │   │   ├── tasks
+│   │   │   │   ├── cni.yaml            # Apply CNI networking
+│   │   │   │   ├── config.yaml         # Kubeadm config handling
+│   │   │   │   ├── copy_certs.yaml     # Distribute main control-plane node certificates to other control-plane nodes
+│   │   │   │   ├── images.yaml         # Pull control-plane images
+│   │   │   │   ├── init.yaml           # kubeadm init task
+│   │   │   │   ├── join_masters.yaml   # Join additional control-plane nodes
+│   │   │   │   ├── main.yml            # Entry point for control-plane role
+│   │   │   │   └── users.yaml          # Configure kubectl access
+│   │   │   └── templates
+│   │   │       └── kubeadm-config.yaml.j2  # kubeadm configuration template
+│   │   ├── data_plane                  # Worker node setup
+│   │   │   ├── meta
+│   │   │   │   └── main.yml
+│   │   │   └── tasks
+│   │   │       ├── join_workers.yaml   # Worker node join task
+│   │   │       └── main.yml            # Entry file
+│   │   ├── etcd                        # etcd cluster setup role
+│   │   │   ├── meta
+│   │   │   │   └── main.yml
+│   │   │   ├── tasks
+│   │   │   │   ├── main.yml            # Entry file
+│   │   │   │   ├── pkgs.yaml           # etcd package installation
+│   │   │   │   └── systemd.yaml        # etcd systemd configuration
+│   │   │   └── templates
+│   │   │       └── etcd.service.j2     # etcd systemd unit template
+│   │   ├── etcd_verify                 # etcd cluster verification role
+│   │   │   ├── meta
+│   │   │   │   └── main.yml
+│   │   │   └── tasks
+│   │   │       ├── main.yml            # Entry file
+│   │   │       └── verify.yaml         # etcd health checks
+│   │   ├── haproxy                     # HAProxy load balancer role
+│   │   │   ├── handlers
+│   │   │   │   └── main.yml            # Restart handler
+│   │   │   ├── meta
+│   │   │   │   └── main.yml
+│   │   │   ├── tasks
+│   │   │   │   ├── configure.yaml      # HAProxy configuration
+│   │   │   │   ├── install.yaml        # Install HAProxy
+│   │   │   │   ├── main.yml            # Entry file
+│   │   │   │   └── verify.yaml         # HAProxy health checks
+│   │   │   └── templates
+│   │   │       └── haproxy.cfg.j2      # HAProxy config template
+│   │   ├── keepalive                   # Keepalived VRRP configure/varify/failover role
+│   │   │   ├── handlers
+│   │   │   │   └── main.yml            # Restart handler
+│   │   │   ├── meta
+│   │   │   │   └── main.yml
+│   │   │   ├── tasks
+│   │   │   │   ├── config.yaml         # Keepalived config
+│   │   │   │   ├── failover.yaml       # Failover logic
+│   │   │   │   ├── main.yml            # Entry file
+│   │   │   │   ├── path.yaml           # Script path setup
+│   │   │   │   ├── pkgs.yaml           # Install keepalived
+│   │   │   │   └── verify.yaml         # Failover validation
+│   │   │   └── templates
+│   │   │       ├── check_apiserver.sh.j2   # Health check script
+│   │   │       └── keepalived.conf.j2      # Keepalived configuration template
+│   │   ├── pki                          # Certificate generation role
+│   │   │   ├── meta
+│   │   │   │   └── main.yml
+│   │   │   └── tasks
+│   │   │       ├── ca.yaml              # Generate CA
+│   │   │       ├── etcd.yaml            # Generate etcd certs
+│   │   │       ├── kubernetes.yaml      # Generate Kubernetes certs
+│   │   │       ├── main.yml             # Entry file
+│   │   │       └── path.yaml            # Certificate directory structure
+│   │   ├── pki_distribution             # Distribute certificates to nodes
+│   │   │   ├── meta
+│   │   │   │   └── main.yml
+│   │   │   └── tasks
+│   │   │       ├── etcd.yaml            # Distribute etcd certs
+│   │   │       ├── main.yml             # Entry file
+│   │   │       └── masters.yaml         # Distribute control-plane certs
+│   │   └── ssh_setup                    # SSH automation role
+│   │       ├── meta
+│   │       │   └── main.yml
+│   │       └── tasks
+│   │           ├── create_user.yml      # Create ansible user
+│   │           ├── distribute_key.yml   # Distribute SSH public key
+│   │           ├── fetch_key.yml        # Fetch SSH keys if needed
+│   │           ├── generate_key.yml     # Generate SSH key pair
+│   │           └── main.yml             # Entry file
+│   └── site.yml                         # Main playbook entry point
+├── README.md                            # Project documentation
+└── vagrantfile                          # Vagrant VM definitions
+```
+---
+
+### Generate a SSH keys for ansible
+```bash
+$ ssh-keygen -t ed25519 -b 4096 C "your_comment" -f ~/.ssh/ansible
+```
+
+---
+
+### Vagrant Environment
+
+| Role          | FQDN                    | IP            | OS           | RAM | CPU |
+| ------------- | ----------------------- | ------------- | ------------ | --- | --- |
+| Etcd 1        | etcdone.example.com     | 192.168.29.61 | Ubuntu 22.04 | 1G  | 1   |
+| Etcd 2        | etcdtwo.example.com     | 192.168.29.62 | Ubuntu 22.04 | 1G  | 1   |
+| Etcd 3        | etcdthree.example.com   | 192.168.29.63 | Ubuntu 22.04 | 1G  | 1   |
+| Master 1      | masterone.example.com   | 192.168.29.51 | Ubuntu 22.04 | 2G  | 2   |
+| Master 2      | mastertwo.example.com   | 192.168.29.52 | Ubuntu 22.04 | 2G  | 2   |
+| Master 3      | masterthree.example.com | 192.168.29.53 | Ubuntu 22.04 | 2G  | 2   |
+| Load Balancer | lbone.example.com       | 192.168.29.81 | Ubuntu 22.04 | 1G  | 1   |
+| Load Balancer | lbtwo.example.com       | 192.168.29.82 | Ubuntu 22.04 | 1G  | 1   |
+| Worker 1      | workerone.example.com   | 192.168.29.71 | Ubuntu 22.04 | 1G  | 1   |
+
+```bash
+# Start servers
 # On server1
-vagrant up masterone mastertwo masterthree
+$ vagrant up masterone mastertwo masterthree
 
 # On server2
-vagrant up etcdone etcdtwo etcdthree
-vagrant up workerone lbone lbtwo
+$ vagrant up etcdone etcdtwo etcdthree
+$ vagrant up workerone lbone lbtwo
 ```
 
 ```bash
+# Stop servers
 # On server1
-vagrant halt masterone mastertwo masterthree
+$ vagrant halt masterone mastertwo masterthree
 
 # On server2
-vagrant halt etcdone etcdtwo etcdthree
-vagrant halt workerone lbone lbtwo
+$ vagrant halt etcdone etcdtwo etcdthree
+$ vagrant halt workerone lbone lbtwo
 ```
 
 ```bash
+# Destroy servers
 # On server1
-vagrant destroy masterone mastertwo masterthree
+$ vagrant destroy masterone mastertwo masterthree
 
 # On server2
-vagrant destroy etcdone etcdtwo etcdthree
-vagrant destroy workerone lbone lbtwo
+$ vagrant destroy etcdone etcdtwo etcdthree
+$ vagrant destroy workerone lbone lbtwo
 ```
+
+---
+
+<!-- <p align="center">
+  <img src="Untitled design.gif" width="800"/>
+</p> -->
+
+<center>
+  <img src="Untitled design.gif" />
+</center>
+
+---
+
+### Virtual IP (VIP)
+
+| Purpose            | IP                |
+| ------------------ | ----------------- |
+| Kubernetes API VIP | **192.168.29.80** |
+
+The VIP is managed by **Keepalived** and floats between `lbone` and `lbtwo`.
+
+---
+
+### 
 ```bash
-$ ssh-keygen -t ed25519 -b 4096
+# Export ansible.cfg file
+$ export ANSIBLE_CONFIG=~/HA-k8s-cluster/k8s-cluster-ansible/ansible.cfg
 
-Generating public/private ed25519 key pair.
-Enter file in which to save the key (/root/.ssh/id_ed25519): /root/.ssh/ansible   
-Enter passphrase (empty for no passphrase): 
-Enter same passphrase again: 
-Your identification has been saved in /root/.ssh/ansible
-Your public key has been saved in /root/.ssh/ansible.pub
+# Download a required collections
+$ ansible-galaxy collection install -r collections/requirements.yml -p ~/HA-k8s-cluster/k8s-cluster-ansible/collections/
 ```
-```bash
-$ eval $(ssh-agent)
-Agent pid 3038
 
-$ ssh-add /root/.ssh/ansible
-Enter passphrase for /root/.ssh/ansible: 
-Identity added: /root/.ssh/ansible (root@SVM)
-
-$ ssh-add -l
-256 SHA256:UDNgYrArbAGnssz9vyUXa1NZKLmG26eGYAefy67auCk root@SVM (ED25519)
-
-$ ssh -A node
-```
-```bash
-export ANSIBLE_CONFIG=~/HA-k8s-cluster/k8s-cluster-ansible/ansible.cfg
-
-ansible-galaxy collection install -r collections/requirements.yml -p ~/HA-k8s-cluster/k8s-cluster-ansible/collections/
-
-```
+###  To decrypt the private key
 ```bash
 k8s-cluster-ansible/
 ├── ansible.cfg
@@ -154,30 +327,7 @@ ansible-playbook playbooks/site.yml --tags=keepalive -e "keepalive_configure=fal
 
 ---
 
-## **Vagrant Environment**
 
-| Role          | FQDN                    | IP            | OS           | RAM | CPU |
-| ------------- | ----------------------- | ------------- | ------------ | --- | --- |
-| Etcd 1        | etcdone.example.com     | 192.168.29.61 | Ubuntu 22.04 | 1G  | 1   |
-| Etcd 2        | etcdtwo.example.com     | 192.168.29.62 | Ubuntu 22.04 | 1G  | 1   |
-| Etcd 3        | etcdthree.example.com   | 192.168.29.63 | Ubuntu 22.04 | 1G  | 1   |
-| Master 1      | masterone.example.com   | 192.168.29.51 | Ubuntu 22.04 | 2G  | 2   |
-| Master 2      | mastertwo.example.com   | 192.168.29.52 | Ubuntu 22.04 | 2G  | 2   |
-| Master 3      | masterthree.example.com | 192.168.29.53 | Ubuntu 22.04 | 2G  | 2   |
-| Load Balancer | lbone.example.com       | 192.168.29.81 | Ubuntu 22.04 | 1G  | 1   |
-| Load Balancer | lbtwo.example.com       | 192.168.29.82 | Ubuntu 22.04 | 1G  | 1   |
-| Worker 1      | workerone.example.com   | 192.168.29.71 | Ubuntu 22.04 | 1G  | 1   |
----
-![](/Untitled%20design.gif)
----
-
-## **Virtual IP (VIP)**
-
-| Purpose            | IP                |
-| ------------------ | ----------------- |
-| Kubernetes API VIP | **192.168.29.80** |
-
-The VIP is managed by **Keepalived** and floats between `lbone` and `lbtwo`.
 
 ---
 
