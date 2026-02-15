@@ -5,7 +5,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = '''
-    name: debug
+    callback: debug
     type: stdout
     short_description: formatted stdout/stderr display
     description:

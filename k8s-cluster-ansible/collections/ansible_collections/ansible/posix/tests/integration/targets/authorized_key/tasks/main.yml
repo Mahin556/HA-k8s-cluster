@@ -1,4 +1,3 @@
----
 # test code for the authorized_key module
 # - (c) 2014, James Cammarata <jcammarata@ansible.com>
 # - (c) 2021, Hideki Saito <saito@fgrep.org>
@@ -18,19 +17,16 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 - name: Setup testing environment
-  ansible.builtin.import_tasks: setup_steps.yml
+  import_tasks: setup_steps.yml
 
 - name: Test for multiple keys handling
-  ansible.builtin.import_tasks: multiple_keys.yml
+  import_tasks: multiple_keys.yml
 
 - name: Test for ssh-dss key handling
-  ansible.builtin.import_tasks: ssh_dss.yml
+  import_tasks: ssh_dss.yml
 
 - name: Test for check mode
-  ansible.builtin.import_tasks: check_mode.yml
+  import_tasks: check_mode.yml
 
 - name: Test for the management of comments with key
-  ansible.builtin.import_tasks: comments.yml
-
-- name: Test for specifying key as a path
-  ansible.builtin.import_tasks: check_path.yml
+  import_tasks: comments.yml

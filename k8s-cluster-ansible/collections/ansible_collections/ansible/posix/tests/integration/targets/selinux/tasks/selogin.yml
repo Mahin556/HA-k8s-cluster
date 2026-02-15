@@ -1,71 +1,70 @@
----
-- name: Create user for testing
-  ansible.builtin.user:
+- name: create user for testing
+  user:
     name: seuser
-- name: Attempt to add mapping without 'seuser'
+- name: attempt to add mapping without 'seuser'
   register: selogin_error
   ignore_errors: true
-  community.general.selogin:
+  community.general.system.selogin:
     login: seuser
-- name: Verify failure
-  ansible.builtin.assert:
+- name: verify failure
+  assert:
     that:
-      - selogin_error is failed
-- name: Map login to SELinux user
+    - selogin_error is failed
+- name: map login to SELinux user
   register: selogin_new_mapping
-  check_mode: "{{ item }}"
+  check_mode: '{{ item }}'
   with_items:
-    - true
-    - false
-    - true
-    - false
-  community.general.selogin:
+  - true
+  - false
+  - true
+  - false
+  community.general.system.selogin:
     login: seuser
     seuser: staff_u
-- name: New mapping- verify functionality and check_mode
-  ansible.builtin.assert:
+- name: new mapping- verify functionality and check_mode
+  assert:
     that:
-      - selogin_new_mapping.results[0] is changed
-      - selogin_new_mapping.results[1] is changed
-      - selogin_new_mapping.results[2] is not changed
-      - selogin_new_mapping.results[3] is not changed
-- name: Change SELinux user login mapping
+    - selogin_new_mapping.results[0] is changed
+    - selogin_new_mapping.results[1] is changed
+    - selogin_new_mapping.results[2] is not changed
+    - selogin_new_mapping.results[3] is not changed
+- name: change SELinux user login mapping
   register: selogin_mod_mapping
-  check_mode: "{{ item }}"
+  check_mode: '{{ item }}'
   with_items:
-    - true
-    - false
-    - true
-    - false
-  community.general.selogin:
+  - true
+  - false
+  - true
+  - false
+  community.general.system.selogin:
     login: seuser
     seuser: user_u
-- name: Changed mapping- verify functionality and check_mode
-  ansible.builtin.assert:
+- name: changed mapping- verify functionality and check_mode
+  assert:
     that:
-      - selogin_mod_mapping.results[0] is changed
-      - selogin_mod_mapping.results[1] is changed
-      - selogin_mod_mapping.results[2] is not changed
-      - selogin_mod_mapping.results[3] is not changed
-- name: Remove SELinux user mapping
+    - selogin_mod_mapping.results[0] is changed
+    - selogin_mod_mapping.results[1] is changed
+    - selogin_mod_mapping.results[2] is not changed
+    - selogin_mod_mapping.results[3] is not changed
+- name: remove SELinux user mapping
   register: selogin_del_mapping
-  check_mode: "{{ item }}"
+  check_mode: '{{ item }}'
   with_items:
-    - true
-    - false
-    - true
-    - false
-  community.general.selogin:
+  - true
+  - false
+  - true
+  - false
+  community.general.system.selogin:
     login: seuser
     state: absent
-- name: Delete mapping- verify functionality and check_mode
-  ansible.builtin.assert:
+- name: delete mapping- verify functionality and check_mode
+  assert:
     that:
-      - selogin_del_mapping.results[0] is changed
-      - selogin_del_mapping.results[1] is changed
-      - selogin_del_mapping.results[2] is not changed
-      - selogin_del_mapping.results[3] is not changed
-- name: Remove test user
-  ansible.builtin.user:
+    - selogin_del_mapping.results[0] is changed
+    - selogin_del_mapping.results[1] is changed
+    - selogin_del_mapping.results[2] is not changed
+    - selogin_del_mapping.results[3] is not changed
+- name: remove test user
+  user:
     name: seuser
     state: absent

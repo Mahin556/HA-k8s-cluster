@@ -1,4 +1,3 @@
----
 # Test playbook for the firewalld module - service operations
 # (c) 2017, Adam Miller <admiller@redhat.com>
 
@@ -17,58 +16,50 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-- name: Firewalld service test permanent enabled
-  ansible.posix.firewalld:
+- name: firewalld service test permanent enabled
+  firewalld:
     service: https
     permanent: true
-    immediate: true
-    offline: true
     state: enabled
   register: result
 
-- name: Assert firewalld service test permanent enabled worked
-  ansible.builtin.assert:
+- name: assert firewalld service test permanent enabled worked
+  assert:
     that:
-      - result is changed
+    - result is changed
 
-- name: Firewalld service test permanent enabled rerun (verify not changed)
-  ansible.posix.firewalld:
+- name: firewalld service test permanent enabled rerun (verify not changed)
+  firewalld:
     service: https
     permanent: true
-    immediate: true
-    offline: true
     state: enabled
   register: result
 
-- name: Assert firewalld service test permanent enabled rerun worked (verify not changed)
-  ansible.builtin.assert:
+- name: assert firewalld service test permanent enabled rerun worked (verify not changed)
+  assert:
     that:
-      - result is not changed
+    - result is not changed
 
-- name: Firewalld service test permanent disabled
-  ansible.posix.firewalld:
+- name: firewalld service test permanent disabled
+  firewalld:
     service: https
     permanent: true
-    immediate: true
-    offline: true
     state: disabled
   register: result
 
-- name: Assert firewalld service test permanent disabled worked
-  ansible.builtin.assert:
+- name: assert firewalld service test permanent disabled worked
+  assert:
     that:
-      - result is changed
+    - result is changed
 
-- name: Firewalld service test permanent disabled rerun (verify not changed)
-  ansible.posix.firewalld:
+- name: firewalld service test permanent disabled rerun (verify not changed)
+  firewalld:
     service: https
     permanent: true
-    immediate: true
-    offline: true
     state: disabled
   register: result
 
-- name: Assert firewalld service test permanent disabled rerun worked (verify not changed)
-  ansible.builtin.assert:
+- name: assert firewalld service test permanent disabled rerun worked (verify not changed)
+  assert:
     that:
-      - result is not changed
+    - result is not changed

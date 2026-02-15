@@ -1,4 +1,3 @@
----
 # (c) 2017, Martin Krizek <mkrizek@redhat.com>
 
 # This file is part of Ansible
@@ -17,44 +16,25 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 - name: Create ansible user
-  ansible.builtin.user:
+  user:
     name: "{{ test_user }}"
 
 - name: Create ansible group
-  ansible.builtin.group:
+  group:
     name: "{{ test_group }}"
 
-- name: Clean up working directory and files
-  ansible.builtin.file:
-    path: "{{ output_dir }}"
-    state: absent
-
-- name: Create working directory
-  ansible.builtin.file:
-    path: "{{ output_dir }}"
-    state: directory
-    mode: "0755"
-
 - name: Create ansible file
-  ansible.builtin.file:
+  file:
     path: "{{ test_file }}"
     state: touch
-    mode: "0644"
 
 - name: Create ansible dir
-  ansible.builtin.file:
+  file:
     path: "{{ test_dir }}"
     state: directory
-    mode: "0755"
-
-- name: Install acl package
-  ansible.builtin.package:
-    name: acl
-    state: present
-
 ##############################################################################
 - name: Grant ansible user read access to a file
-  ansible.posix.acl:
+  acl:
     path: "{{ test_file }}"
     entity: "{{ test_user }}"
     etype: user
@@ -62,21 +42,12 @@
     state: present
   register: output
 
-- name: Debug ansible.posix.acl output
-  ansible.builtin.debug:
-    msg: "{{ output }}"
-
-- name: Get getfacl output
-  ansible.builtin.command: getfacl {{ test_file | quote }}
-  changed_when: false
+- name: get getfacl output
+  shell: "getfacl {{ test_file | quote }}"
   register: getfacl_output
 
-- name: Debug getfacl output
-  ansible.builtin.debug:
-    msg: "{{ getfacl_output.stdout_lines }}"
-
-- name: Verify Output
-  ansible.builtin.assert:
+- name: verify output
+  assert:
     that:
       - output is changed
       - output is not failed
@@ -84,25 +55,16 @@
       - "'user:{{ test_user }}:r--' in getfacl_output.stdout_lines"
 ##############################################################################
 - name: Obtain the acl for a specific file
-  ansible.posix.acl:
+  acl:
     path: "{{ test_file }}"
   register: output
 
-- name: Debug ansible.posix.acl output
-  ansible.builtin.debug:
-    msg: "{{ output }}"
-
-- name: Get getfacl output
-  ansible.builtin.command: getfacl {{ test_file | quote }}
-  changed_when: false
+- name: get getfacl output
+  shell: "getfacl {{ test_file | quote }}"
   register: getfacl_output
 
-- name: Debug getfacl output
-  ansible.builtin.debug:
-    msg: "{{ getfacl_output.stdout_lines }}"
-
-- name: Verify output
-  ansible.builtin.assert:
+- name: verify output
+  assert:
     that:
       - output is not changed
       - output is not failed
@@ -117,22 +79,20 @@
       - "'mask::r--' in getfacl_output.stdout_lines"
       - "'other::r--' in getfacl_output.stdout_lines"
 ##############################################################################
-#
 - name: Removes the acl for ansible user on a specific file
-  ansible.posix.acl:
+  acl:
     path: "{{ test_file }}"
     entity: "{{ test_user }}"
     etype: user
     state: absent
   register: output
 
-- name: Get getfacl output
-  ansible.builtin.command: getfacl {{ test_file | quote }}
-  changed_when: false
+- name: get getfacl output
+  shell: "getfacl {{ test_file | quote }}"
   register: getfacl_output
 
-- name: Verify output
-  ansible.builtin.assert:
+- name: verify output
+  assert:
     that:
       - output is changed
       - output is not failed
@@ -140,22 +100,21 @@
       - "'user:{{ test_user }}:r--' not in getfacl_output.stdout_lines"
 ##############################################################################
 - name: Sets default acl for ansible user on ansible dir
-  ansible.posix.acl:
+  acl:
     path: "{{ test_dir }}"
     entity: "{{ test_user }}"
     etype: user
     permissions: rw
-    default: true
+    default: yes
     state: present
   register: output
 
-- name: Get getfacl output
-  ansible.builtin.command: getfacl {{ test_dir | quote }}
-  changed_when: false
+- name: get getfacl output
+  shell: "getfacl {{ test_dir | quote }}"
   register: getfacl_output
 
-- name: Verify output
-  ansible.builtin.assert:
+- name: verify output
+  assert:
     that:
       - output is changed
       - output is not failed
@@ -163,24 +122,22 @@
       - "'default:user:{{ test_user }}:rw-' in getfacl_output.stdout_lines"
 ##############################################################################
 - name: Cleanup
-  ansible.builtin.command: setfacl -b {{ test_dir | quote }}
-  changed_when: false
+  shell: "setfacl -b {{ test_dir | quote }}"
 ##############################################################################
 - name: Same as previous but using entry shorthand
-  ansible.posix.acl:
+  acl:
     path: "{{ test_dir }}"
-    entry: user:{{ test_user }}:rw-
-    default: true
+    entry: "user:{{ test_user }}:rw-"
+    default: yes
     state: present
   register: output
 
-- name: Get getfacl output
-  ansible.builtin.command: getfacl {{ test_dir | quote }}
-  changed_when: false
+- name: get getfacl output
+  shell: "getfacl {{ test_dir | quote }}"
   register: getfacl_output
 
-- name: Verify output
-  ansible.builtin.assert:
+- name: verify output
+  assert:
     that:
       - output is changed
       - output is not failed
@@ -188,20 +145,19 @@
       - "'default:user:{{ test_user }}:rw-' in getfacl_output.stdout_lines"
 ##############################################################################
 - name: Same as previous, to test idempotence
-  ansible.posix.acl:
+  acl:
     path: "{{ test_dir }}"
-    entry: user:{{ test_user }}:rw-
-    default: true
+    entry: "user:{{ test_user }}:rw-"
+    default: yes
     state: present
   register: output
 
-- name: Get getfacl output
-  ansible.builtin.command: getfacl {{ test_dir | quote }}
-  changed_when: false
+- name: get getfacl output
+  shell: "getfacl {{ test_dir | quote }}"
   register: getfacl_output
 
-- name: Verify output
-  ansible.builtin.assert:
+- name: verify output
+  assert:
     that:
       - output is not changed
       - output is not failed
@@ -209,34 +165,32 @@
       - "'default:user:{{ test_user }}:rw-' in getfacl_output.stdout_lines"
 ##############################################################################
 - name: Cleanup
-  ansible.builtin.command: setfacl -b {{ test_dir | quote }}
-  changed_when: false
+  shell: "setfacl -b {{ test_dir | quote }}"
 ##############################################################################
 - name: Set default acls
-  ansible.posix.acl:
+  acl:
     path: "{{ test_dir }}"
     entry: "{{ item }}"
-    default: true
+    default: yes
     state: present
   with_items:
-    - user:{{ test_user }}:rw-
-    - group:{{ test_group }}:rw-
+      - "user:{{ test_user }}:rw-"
+      - "group:{{ test_group }}:rw-"
 
 - name: Remove default group test_user acl
-  ansible.posix.acl:
+  acl:
     path: "{{ test_dir }}"
-    entry: group:{{ test_group }}:rw-
-    default: true
+    entry: "group:{{ test_group }}:rw-"
+    default: yes
     state: absent
   register: output
 
-- name: Get getfacl output
-  ansible.builtin.command: getfacl {{ test_dir | quote }}
-  changed_when: false
+- name: get getfacl output
+  shell: "getfacl {{ test_dir | quote }}"
   register: getfacl_output
 
-- name: Verify output
-  ansible.builtin.assert:
+- name: verify output
+  assert:
     that:
       - output is changed
       - output is not failed

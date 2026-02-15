@@ -2,7 +2,7 @@
  "collection_info": {
   "namespace": "ansible",
   "name": "posix",
-  "version": "2.1.0",
+  "version": "1.3.0",
   "authors": [
    "Ansible (github.com/ansible)"
   ],
@@ -18,7 +18,7 @@
   "license_file": "COPYING",
   "dependencies": {},
   "repository": "https://github.com/ansible-collections/ansible.posix",
-  "documentation": "https://docs.ansible.com/ansible/latest/collections/ansible/posix/",
+  "documentation": "https://github.com/ansible-collections/ansible.posix/tree/main/docs",
   "homepage": "https://github.com/ansible-collections/ansible.posix",
   "issues": "https://github.com/ansible-collections/ansible.posix"
  },
@@ -26,7 +26,7 @@
   "name": "FILES.json",
   "ftype": "file",
   "chksum_type": "sha256",
-  "chksum_sha256": "d4a1c0f763062c80d31e337f6a176d8c794945e36f624ca3be55694272ddc061",
+  "chksum_sha256": "c962387fb94e411365b7399db84920d7241ad5b2d8ce5688ede397e781c3e3f4",
   "format": 1
  },
  "format": 1

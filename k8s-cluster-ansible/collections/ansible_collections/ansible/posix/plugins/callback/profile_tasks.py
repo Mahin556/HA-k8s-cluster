@@ -10,18 +10,18 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = '''
-    name: profile_tasks
+    callback: profile_tasks
     type: aggregate
     short_description: adds time information to tasks
     description:
       - Ansible callback plugin for timing individual tasks and overall execution time.
       - "Mashup of 2 excellent original works: https://github.com/jlafon/ansible-profile,
          https://github.com/junaid18183/ansible_home/blob/master/ansible_plugins/callback_plugins/timestamp.py.old"
-      - "Format: C(<task start timestamp>) C(<length of previous task>) C(<current elapsed playbook execution time>)"
+      - "Format: C(<task start timestamp> (<length of previous task>) <current elapsed playbook execution time>)"
       - It also lists the top/bottom time consuming tasks in the summary (configurable)
       - Before 2.4 only the environment variables were available for configuration.
     requirements:
-      - enable in configuration - see examples section below for details.
+      - whitelisting in configuration - see examples section below for details.
     options:
       output_limit:
         description: Number of tasks to display in the summary
@@ -40,25 +40,13 @@ DOCUMENTATION = '''
         ini:
           - section: callback_profile_tasks
             key: sort_order
-      summary_only:
-        description:
-          - Only show summary, not individual task profiles.
-            Especially usefull in combination with C(DISPLAY_SKIPPED_HOSTS=false) and/or C(ANSIBLE_DISPLAY_OK_HOSTS=false).
-        type: bool
-        default: False
-        env:
-          - name: PROFILE_TASKS_SUMMARY_ONLY
-        ini:
-          - section: callback_profile_tasks
-            key: summary_only
-        version_added: 1.5.0
 '''
 
 EXAMPLES = '''
 example: >
   To enable, add this to your ansible.cfg file in the defaults block
     [defaults]
-    callbacks_enabled=ansible.posix.profile_tasks
+    callback_whitelist = ansible.posix.profile_tasks
 sample output: >
 #
 #    TASK: [ensure messaging security group exists] ********************************
@@ -104,8 +92,7 @@ def filled(msg, fchar="*"):
 
 def timestamp(self):
     if self.current is not None:
-        elapsed = time.time() - self.stats[self.current]['started']
-        self.stats[self.current]['elapsed'] += elapsed
+        self.stats[self.current]['time'] = time.time() - self.stats[self.current]['time']
 
 
 def tasktime():
@@ -132,7 +119,6 @@ class CallbackModule(CallbackBase):
         self.current = None
 
         self.sort_order = None
-        self.summary_only = None
         self.task_output_limit = None
 
         super(CallbackModule, self).__init__()
@@ -150,8 +136,6 @@ class CallbackModule(CallbackBase):
             elif self.sort_order == 'none':
                 self.sort_order = None
 
-        self.summary_only = self.get_option('summary_only')
-
         self.task_output_limit = self.get_option('output_limit')
         if self.task_output_limit is not None:
             if self.task_output_limit == 'all':
@@ -159,27 +143,16 @@ class CallbackModule(CallbackBase):
             else:
                 self.task_output_limit = int(self.task_output_limit)
 
-    def _display_tasktime(self):
-        if not self.summary_only:
-            self._display.display(tasktime())
-
     def _record_task(self, task):
         """
         Logs the start of each task
         """
-        self._display_tasktime()
+        self._display.display(tasktime())
         timestamp(self)
 
         # Record the start time of the current task
-        # stats[TASK_UUID]:
-        #   started: Current task start time. This value will be updated each time a task
-        #            with the same UUID is executed when `serial` is specified in a playbook.
-        #   elapsed: Elapsed time since the first serialized task was started
         self.current = task._uuid
-        if self.current not in self.stats:
-            self.stats[self.current] = {'started': time.time(), 'elapsed': 0.0, 'name': task.get_name()}
-        else:
-            self.stats[self.current]['started'] = time.time()
+        self.stats[self.current] = {'time': time.time(), 'name': task.get_name()}
         if self._display.verbosity >= 2:
             self.stats[self.current]['path'] = task.get_path()
 
@@ -189,10 +162,10 @@ class CallbackModule(CallbackBase):
     def v2_playbook_on_handler_task_start(self, task):
         self._record_task(task)
 
-    def v2_playbook_on_stats(self, stats):
-        # Align summary report header with other callback plugin summary
-        self._display.banner("TASKS RECAP")
+    def playbook_on_setup(self):
+        self._display.display(tasktime())
 
+    def playbook_on_stats(self, stats):
         self._display.display(tasktime())
         self._display.display(filled("", fchar="="))
 
@@ -205,7 +178,7 @@ class CallbackModule(CallbackBase):
         if self.sort_order is not None:
             results = sorted(
                 self.stats.items(),
-                key=lambda x: x[1]['elapsed'],
+                key=lambda x: x[1]['time'],
                 reverse=self.sort_order,
             )
 
@@ -214,7 +187,7 @@ class CallbackModule(CallbackBase):
 
         # Print the timings
         for uuid, result in results:
-            msg = u"{0:-<{2}}{1:->9}".format(result['name'] + u' ', u' {0:.02f}s'.format(result['elapsed']), self._display.columns - 9)
+            msg = u"{0:-<{2}}{1:->9}".format(result['name'] + u' ', u' {0:.02f}s'.format(result['time']), self._display.columns - 9)
             if 'path' in result:
                 msg += u"\n{0:-<{1}}".format(result['path'] + u' ', self._display.columns)
             self._display.display(msg)

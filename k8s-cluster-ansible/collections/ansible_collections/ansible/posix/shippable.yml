@@ -1,4 +1,3 @@
----
 language: python
 
 env:
@@ -16,14 +15,14 @@ matrix:
     - env: T=2.9/freebsd/12.0/1
     - env: T=2.9/linux/centos6/1
     - env: T=2.9/linux/centos7/1
-    #    - env: T=2.9/linux/centos8/1
+    - env: T=2.9/linux/centos8/1
     - env: T=2.9/linux/fedora30/1
     - env: T=2.9/linux/fedora31/1
     - env: T=2.9/linux/opensuse15py2/1
     - env: T=2.9/linux/opensuse15/1
     - env: T=2.9/linux/ubuntu1604/1
     - env: T=2.9/linux/ubuntu1804/1
-    #    - env: T=2.10/aix/7.2/1
+#    - env: T=2.10/aix/7.2/1
     - env: T=2.10/osx/10.11/1
     - env: T=2.10/rhel/7.6/1
     - env: T=2.10/rhel/8.2/1
@@ -31,14 +30,14 @@ matrix:
     - env: T=2.10/freebsd/12.1/1
     - env: T=2.10/linux/centos6/1
     - env: T=2.10/linux/centos7/1
-    #    - env: T=2.10/linux/centos8/1
+    - env: T=2.10/linux/centos8/1
     - env: T=2.10/linux/fedora30/1
     - env: T=2.10/linux/fedora31/1
     - env: T=2.10/linux/opensuse15py2/1
     - env: T=2.10/linux/opensuse15/1
     - env: T=2.10/linux/ubuntu1604/1
     - env: T=2.10/linux/ubuntu1804/1
-    #    - env: T=devel/aix/7.2/1
+#    - env: T=devel/aix/7.2/1
     - env: T=devel/osx/10.11/1
     - env: T=devel/rhel/7.6/1
     - env: T=devel/rhel/8.1/1
@@ -46,7 +45,7 @@ matrix:
     - env: T=devel/freebsd/12.1/1
     - env: T=devel/linux/centos6/1
     - env: T=devel/linux/centos7/1
-    #    - env: T=devel/linux/centos8/1
+    - env: T=devel/linux/centos8/1
     - env: T=devel/linux/fedora30/1
     - env: T=devel/linux/fedora31/1
     - env: T=devel/linux/opensuse15py2/1
@@ -57,7 +56,7 @@ matrix:
 branches:
   except:
     - "*-patch-*"
-    - revert-*-*
+    - "revert-*-*"
 
 build:
   ci:

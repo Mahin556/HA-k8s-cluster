@@ -50,7 +50,7 @@ function retry
         echo "@* -> ${result}"
     done
     echo "Command '@*' failed 3 times!"
-    exit 255
+    exit -1
 }
 
 command -v pip
@@ -62,17 +62,19 @@ else
     retry pip install "https://github.com/ansible/ansible/archive/stable-${ansible_version}.tar.gz" --disable-pip-version-check
 fi
 
-export ANSIBLE_COLLECTIONS_PATH="${PWD}/../../../"
+if [ "${SHIPPABLE_BUILD_ID:-}" ]; then
+    export ANSIBLE_COLLECTIONS_PATHS="${HOME}/.ansible"
+    SHIPPABLE_RESULT_DIR="$(pwd)/shippable"
+    TEST_DIR="${ANSIBLE_COLLECTIONS_PATHS}/ansible_collections/ansible/posix"
+    mkdir -p "${TEST_DIR}"
+    cp -aT "${SHIPPABLE_BUILD_DIR}" "${TEST_DIR}"
+    cd "${TEST_DIR}"
+else
+    export ANSIBLE_COLLECTIONS_PATHS="${PWD}/../../../"
+fi
 
 # START: HACK install dependencies
-if [ "${ansible_version}" == "2.9" ] || [ "${ansible_version}" == "2.10" ]; then
-    # Note: Since community.general 5.x, Ansible Core versions prior to 2.11 are not supported.
-    # So we need to use 4.8.1 for Ansible 2.9 and Ansible Engine 2.10.
-    retry git clone --depth=1 --single-branch -b 4.8.1 https://github.com/ansible-collections/community.general.git "${ANSIBLE_COLLECTIONS_PATH}/ansible_collections/community/general"
-else
-    retry git clone --depth=1 --single-branch https://github.com/ansible-collections/community.general.git "${ANSIBLE_COLLECTIONS_PATH}/ansible_collections/community/general"
-fi
-# Note:  we're installing with git to work around Galaxy being a huge PITA (https://github.com/ansible/galaxy/issues/2429)
+retry ansible-galaxy collection install community.general
 # END: HACK
 
 export PYTHONIOENCODING='utf-8'
@@ -136,7 +138,9 @@ function cleanup
         fi
 
         if [ "${process_coverage}" ]; then
-            python3 -m venv ~/ansible-venv
+            # use python 3.7 for coverage to avoid running out of memory during coverage xml processing
+            # only use it for coverage to avoid the additional overhead of setting up a virtual environment for a potential no-op job
+            virtualenv --python /usr/bin/python3.7 ~/ansible-venv
             set +ux
             . ~/ansible-venv/bin/activate
             set -ux

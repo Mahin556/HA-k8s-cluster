@@ -36,7 +36,7 @@ options:
     choices: [ minutes, hours, days, weeks ]
   state:
     description:
-     - The state dictates if the command or script file should be evaluated as V(present) (added) or V(absent) (deleted).
+     - The state dictates if the command or script file should be evaluated as present(added) or absent(deleted).
     type: str
     choices: [ absent, present ]
     default: present
@@ -44,7 +44,7 @@ options:
     description:
      - If a matching job is present a new job will not be added.
     type: bool
-    default: false
+    default: no
 requirements:
  - at
 author:
@@ -68,7 +68,7 @@ EXAMPLES = r'''
     command: ls -d / >/dev/null
     count: 20
     units: minutes
-    unique: true
+    unique: yes
 '''
 
 import os
