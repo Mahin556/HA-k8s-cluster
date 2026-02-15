@@ -1,0 +1,4 @@
+---
+# tasks file for test_deploy
+- include_tasks: install.yaml
+- include_tasks: app.yaml

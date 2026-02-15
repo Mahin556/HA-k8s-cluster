@@ -1,0 +1,35 @@
+- name: Install required system packages
+  package:
+    name:
+      - python3-pip
+      - python3-venv
+      - ca-certificates
+    state: present
+
+- name: Create virtual environment
+  command: python3 -m venv /opt/{{ virtualenv_name }}
+  args:
+    creates: /opt/{{ virtualenv_name }}/bin/python
+
+- name: Upgrade pip
+  pip:
+    name: pip
+    state: latest
+    virtualenv: /opt/{{ virtualenv_name }}
+
+- name: Copy requirements file
+  copy:
+    src: requirements.txt
+    dest: /tmp/requirements.txt
+
+- name: Install required Python libraries
+  vars:
+    ansible_python_interpreter: /opt/{{ virtualenv_name }}/bin/python
+  pip:
+    requirements: /tmp/requirements.txt
+    virtualenv: /opt/{{ virtualenv_name }}
+
+- name: Install requirements inside venv
+  pip:
+    requirements: /tmp/requirements.txt
+    virtualenv: /opt/my-venv

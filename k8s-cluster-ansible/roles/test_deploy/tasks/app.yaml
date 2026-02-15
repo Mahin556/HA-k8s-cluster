@@ -1,0 +1,92 @@
+- name: Set Python interpreter to venv
+  set_fact:
+    ansible_python_interpreter: /opt/my-venv/bin/python
+
+- name: create deployment resource
+  kubernetes.core.k8s:
+    state: present
+    definition: "{{ lookup('file', 'deployment.yaml') | from_yaml }}"
+
+- name: create Service for nginx app
+  kubernetes.core.k8s:
+    state: present
+    definition: "{{ lookup('file', 'service.yaml') | from_yaml }}"
+
+- name: Generate private key (2048-bit RSA)
+  community.crypto.openssl_privatekey:
+    path: "{{ cert_key_path }}"
+    size: 2048
+    type: RSA
+    state: present
+
+- name: Generate CSR (Certificate Signing Request)
+  community.crypto.openssl_csr:
+    path: "{{ cert_csr_path }}"
+    privatekey_path: "{{ cert_key_path }}"
+    common_name: "{{ cert_common_name }}"
+    organization_name: "{{ cert_org_name }}"
+    select_crypto_backend: cryptography
+    state: present
+
+- name: Generate self-signed certificate
+  community.crypto.x509_certificate:
+    path: "{{ cert_crt_path }}"
+    privatekey_path: "{{ cert_key_path }}"
+    provider: selfsigned
+    csr_path: "{{ cert_csr_path }}"
+    selfsigned_not_before: "+0s"
+    selfsigned_not_after: "+{{ cert_days }}d"
+
+# - name: updating crt & key files name in secret file
+#   ansible.builtin.template:
+#     src: tls-secret.yaml.j2
+#     dest: tls-secret.yaml
+
+- name: Read tls.crt from remote
+  slurp:
+    src: tls.crt
+  register: tls_crt_raw
+
+- name: Read tls.key from remote
+  slurp:
+    src: tls.key
+  register: tls_key_raw
+
+- name: Create TLS secret
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: myapp-tls
+        namespace: default
+      type: kubernetes.io/tls
+      data:
+        tls.crt: "{{ tls_crt_raw.content }}"
+        tls.key: "{{ tls_key_raw.content }}"
+
+
+# - name: Create tls secret for keys & crt
+#   kubernetes.core.k8s:
+#     state: present
+#     definition: "{{ lookup('file', 'tls-secret.yaml') | from_yaml }}"
+
+- name: Create ingress for nginx app
+  kubernetes.core.k8s:
+    state: present
+    definition: "{{ lookup('file', 'ingress.yaml') | from_yaml }}"
+
+# - block:
+#     - name: create deployment
+#       kubernetes.core.k8s:
+#         state: present
+#         src: deployment.yaml
+
+#     - name: create service
+#       kubernetes.core.k8s:
+#         state: present
+#         src: service.yaml
+
+#   environment:
+#     KUBECONFIG: /etc/kubernetes/admin.conf

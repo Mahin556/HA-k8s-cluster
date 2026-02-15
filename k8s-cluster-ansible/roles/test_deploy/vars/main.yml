@@ -1,0 +1,8 @@
+---
+# vars file for test_deploy
+cert_common_name: "myapp.local"
+cert_org_name: "myapp"
+cert_days: 365
+cert_key_path: "tls.key"
+cert_crt_path: "tls.crt"
+cert_csr_path: "tls.csr"
