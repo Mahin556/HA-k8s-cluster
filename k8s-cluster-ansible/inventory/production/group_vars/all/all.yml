@@ -1,0 +1,22 @@
+files_dir: /root/HA-k8s-cluster/k8s-cluster-ansible/files
+
+etcd_certs_dir: "{{ files_dir }}/pki/etcd"
+etcd_ca_crt_name: etcd-ca.crt
+etcd_ca_key_name: etcd-ca.key
+etcd_pki_dir: /etc/etcd/pki
+overwrite_logs: false
+  
+api_server_certs_dir: "{{ files_dir }}/pki/kubernetes"
+
+api_server_crt_name: apiserver_etcd_client.crt
+
+api_server_key_name: apiserver_etcd_client.key
+
+api_server_pki_dir: /etc/kubernetes/pki/etcd
+
+# first_master: "{{ groups['masters'][0] }}"
+first_master: "masterone.example.com"
+
+additional_masters: 
+  - "mastertwo.example.com"
+  - "masterthree.example.com"

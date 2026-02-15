@@ -1,0 +1,34 @@
+kubernetes_version: "v1.35"
+crio_version: "v1.35"
+
+masterone_ssh_user: root
+other_ssh_user: ansible
+
+pki_dir: /etc/kubernetes/pki
+
+k8s_packages:
+  - kubelet
+  - kubeadm
+  - kubectl
+
+crio_packages:
+  - cri-o
+  - cri-tools
+
+control_plane_endpoint: "192.168.29.100:6443"
+
+pod_subnet: "192.168.0.0/16"
+service_subnet: "10.96.0.0/16"
+
+# etcd_endpoints:
+#   - https://etcdone:2379
+#   - https://etcdtwo:2379
+#   - https://etcdthree:2379
+
+cri_socket: unix:///var/run/crio/crio.sock
+
+
+
+users: 
+  - ansible
+  - root
